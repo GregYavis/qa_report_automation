@@ -1,8 +1,8 @@
 from django.contrib import admin
 from django.urls import path
-from .views import test_mainpage
+from .views import MainPage
 
 app_name = 'monitor'
 urlpatterns = [
-    path('', test_mainpage, name='index')
+    path('', MainPage.as_view(), name='main-page'),
 ]
