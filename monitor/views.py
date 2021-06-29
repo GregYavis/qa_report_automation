@@ -30,10 +30,7 @@ class MainPage(View):
         # Process webhook data
         return redirect('/')
 
-    """
-    реализовать перекладывание отчетов
-    Далее необходимо созвониться с ДИ и обсудить создание репозитория для проекта, а так же создание вебхука в jira
-    """
+
 """def report(request):
     #print(request.method)
         #release = Issue.objects.filter(release_name=request.POST)
