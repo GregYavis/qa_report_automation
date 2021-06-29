@@ -18,5 +18,5 @@ class Issue(models.Model):
     issue_summary = models.CharField(max_length=1024)
     create_ts = models.DateTimeField(auto_now_add=True)
     issue_status = models.CharField(choices=STATES, max_length=30)
-    release_name = models.CharField(max_length=56)
+    release_name = models.CharField(max_length=56, blank=True, null=True)
     release_report = models.BooleanField(default=False)

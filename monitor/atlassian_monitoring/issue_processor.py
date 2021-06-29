@@ -76,8 +76,11 @@ class IssueProcessingBasics:
         logger.info(f'Update status for {issue_key} to "{issue_status}".')
 
     def get_release_name(self, issue_key):
-        release_name = self.jira.issue_field_value(issue_key, 'fixVersions')[0]['name']
-        return release_name
+        release_name = self.jira.issue_field_value(issue_key, 'fixVersions')
+        if release_name:
+            return release_name[0]['name']
+        else:
+            return None
 
     def get_issue_summary(self, issue_key):
         return self.jira.issue_field_value(key=issue_key, field='summary')

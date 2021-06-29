@@ -19,9 +19,13 @@ class MainPage(View):
         return render(self.request, 'main_page.html', context)
 
     def post(self, *args, **kwargs):
-        print(self.atlassian_monitor.all_release_tasks_ready(release_name=self.request.POST.get('release_name')))
+        print(self.request.POST)
+        print(self.request.POST.get('email'))
+        #print(args, kwargs)
+        #print(self.atlassian_monitor.all_release_tasks_ready(release_name=self.request.POST.get('release_name')))
         print(self.request.POST.get('release_name'))
         # get that release tasks ready -> launch move_task
+        # Process webhook data
         return redirect('/')
 
     """
