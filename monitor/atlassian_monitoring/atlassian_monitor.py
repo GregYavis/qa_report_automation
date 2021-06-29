@@ -33,6 +33,8 @@ class AtlassianMonitor(IssueProcessingBasics):
 
     def jira_monitoring(self):
         data = self.jira.jql(self.QA_QUERY)
+        print(self.QA_QUERY)
+        print(data)
         for issue in data["issues"]:
             issue_key = issue['key']
 
@@ -60,17 +62,17 @@ class AtlassianMonitor(IssueProcessingBasics):
                 issue_status = self._get_issue_status(issue.issue_key)
                 # Создаем шаблон отчета
                 logger.info(f'Create report template for {issue.issue_key} in Confluence.')
-                self.confluence.create_page(space='AT',
-                                            # title = 'f'{issue.issue_key}. Отчет о тестировании'',
-                                            title=confluence_title,
-                                            body=report_template(issue_key=issue.issue_key,
-                                                                 issue_url=issue.jira_url,
-                                                                 issue_status=issue_status,
-                                                                 issue_summary=issue.issue_summary),
+                #self.confluence.create_page(space='AT',
+                #                            # title = 'f'{issue.issue_key}. Отчет о тестировании'',
+                #                            title=confluence_title,
+                #                            body=report_template(issue_key=issue.issue_key,
+                #                                                 issue_url=issue.jira_url,
+                #                                                 issue_status=issue_status,
+                #                                                 issue_summary=issue.issue_summary),
                                             # parent_id=MUSORKA,
-                                            parent_id=37127275)
+                #                            parent_id=37127275)
                 confluence_id = self.confluence.get_page_by_title(space="AT", title=confluence_title)
-                self.set_issue_confluence_id(issue_key=issue.issue_key, confluence_id=confluence_id['id'])
+                self.set_issue_confluence_id(issue_key=issue.issue_key, confluence_id=0)#confluence_id['id'])
                 # добавляем в links_to страницу в кофлюенсе
             # Для тестирования во время разработки, проверяем на уже записанных в бд тасках что линка добавляется и апдейтится конф айди в бд
             else:
@@ -80,9 +82,10 @@ class AtlassianMonitor(IssueProcessingBasics):
             current_issue = Issue.objects.get(issue_key=issue.issue_key)
             links = self.jira.get_issue_remote_links(current_issue.issue_key)
             if not self.find_confluence_mentions(doc=links):
-                self.jira.create_or_update_issue_remote_links(issue_key=current_issue.issue_key,
-                                                              link_url=self.confluence_link(confluence_id),
-                                                              title=confluence_title)
+                print('ISSUE HAVE NO LINKS')
+                #self.jira.create_or_update_issue_remote_links(issue_key=current_issue.issue_key,
+                #                                              link_url=self.confluence_link(confluence_id),
+                #                                              title=confluence_title)
 
             else:
                 print("pass")

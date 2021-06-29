@@ -12,6 +12,3 @@ def monitor():
     #    for i in processed:
     #        f.write(f'{i.issue_url}\n')
     #    f.close()
-
-if __name__ == '__main__':
-    monitor()

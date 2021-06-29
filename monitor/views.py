@@ -14,6 +14,8 @@ class MainPage(View):
     atlassian_monitor = AtlassianMonitor()
 
     def get(self, *args, **kwargs):
+        atl = AtlassianMonitor()
+        atl.jira_monitoring()
         current_releases = self.issue_processor.get_current_releases_info()
         context = {'releases': current_releases}
         return render(self.request, 'main_page.html', context)
