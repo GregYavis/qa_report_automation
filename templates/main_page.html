@@ -15,7 +15,6 @@
     {% for release_name, issues in releases.items %}
         <p style="margin-top: 20px">
         <form action="{% url 'monitor:main-page' %}" method="POST">
-        {% csrf_token %}
             <a>{{ release_name }}</a>
             <button type="submit" class="btn btn-outline-primary btn-sm" name="release_name" value="{{ release_name }}">Generate release report</button>
         </form>
