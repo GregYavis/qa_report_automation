@@ -61,9 +61,10 @@ class AtlassianMonitor:
             self.tasks.append(issue['key'])
             links = self.jira.get_issue_remote_links(issue['id'])
             # Условие для создания статьи с шаблоном для отчета тестирования
-            print(links[0]['object']['title'])
+            #print(links[0]['object']['title'])
             if not any(self.__confluence_mentions_in_links(links)):
                 # Занести в SQLite
+
                 print(self.jira.issue_field_value(key=issue['key'], field='summary'))
         #print(self.tasks)
 

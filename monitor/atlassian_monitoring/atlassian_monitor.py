@@ -33,8 +33,8 @@ class AtlassianMonitor(IssueProcessingBasics):
 
     def jira_monitoring(self):
         data = self.jira.jql(self.QA_QUERY)
-        print(self.QA_QUERY)
-        print(data)
+        #print(self.QA_QUERY)
+        #print(data)
         for issue in data["issues"]:
             issue_key = issue['key']
 
@@ -133,9 +133,9 @@ class AtlassianMonitor(IssueProcessingBasics):
         # need get current year, release that task relate to,
         release_name = 'ru.6.3.25'
         year_release = datetime.datetime.today().year
-        print(year_release)
+        #print(year_release)
         _release_id = self.confluence.get_page_by_title(space="AT", title=f'Релиз {release_name} Отчет о тестировании')
-        print(_release_id)
+        #print(_release_id)
         updated_issue = Issue.objects.get(issue_key='SLOV-6950')
         page_id = updated_issue.confluence_id
         confluence_title = f'{updated_issue.issue_key}. Отчет о тестировании'

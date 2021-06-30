@@ -56,7 +56,7 @@ class IssueProcessingBasics:
 
     def find_confluence_mentions(self, doc):
         #[url for url in self.find_confluence_mentions(key='url', doc=links) if self.confluence_viewpage in url]
-        print(nested_lookup('url', doc))
+        #print(nested_lookup('url', doc))
         #return nested_lookup(key, doc)
         return [url for url in nested_lookup('url', doc) if self.confluence_viewpage in url]
 
