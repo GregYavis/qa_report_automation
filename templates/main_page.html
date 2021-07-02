@@ -6,13 +6,17 @@
 </head>
 
 <!-- Custom CSS -->
-{% load static %}
 
-<link href="{% static 'css/base.css' %}" rel="stylesheet">
+
 {% include 'navbar.html' %}
 {% block content %}
     <div class="container text-center" style="margin-top: 10px">
-    {% for release_name, issues in releases.items %}
+    <a>For testing only</a>
+    <form action="{% url 'monitor:main-page' %}" method="POST">
+    <button type="submit" class="btn btn-outline-primary btn-sm" name="monitor" value="jira">Start jira monitor</button>
+    <button type="submit" class="btn btn-outline-primary btn-sm" name="monitor" value="confluence">Confluence monitor</button>
+     </form>
+        {% for release_name, issues in releases.items %}
         <p style="margin-top: 20px">
         <form action="{% url 'monitor:main-page' %}" method="POST">
             <a>{{ release_name }}</a>
@@ -23,7 +27,7 @@
             <thead>
             <tr>
                 <th>Issue</th>
-                <th>Status</th>
+                <th width="200">Status</th>
             </tr>
             </thead>
             {% for issue, status in issues.items %}
@@ -40,9 +44,7 @@
 </div>
 
 
-
-
 {% endblock %}
-<script src="{% static 'js/base.js' %}"></script>
+
 
 

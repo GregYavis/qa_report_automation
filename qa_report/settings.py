@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'monitor.apps.MonitorConfig',
-    'django_crontab'
 ]
 
 MIDDLEWARE = [
@@ -121,13 +120,29 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-CRONJOBS = [
-    ("*/1 * * * *", 'monitor.cron.monitor'),
-]
+
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static')
     ]
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 LOGIN_REDIRECT_URL = '/'
-CSRF_TRUSTED_ORIGINS = ['217.67.177.194']
-CSRF_COOKIE_DOMAIN = ['217.67.177.194']
+"""
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'info.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+
+    },
+}"""

@@ -24,7 +24,7 @@ table1 = '<a href="#page-metadata-start" class="assistive">Переход к н�
         '<td class="confluenceTd"><br/></td></tr></tbody></table></div></div>'
 
 
-def report_template(issue_key, issue_status, issue_url, issue_summary):
+def confluence_body_template(issue_key, issue_status, issue_url, issue_summary):
     table = '<div id="main-content" class="wiki-content">' \
             '<div class="table-wrap"><table class="relative-table confluenceTable tablesorter tablesorter-default stickyTableHeaders" style="width: 76.313%; padding: 0px;" role="grid" resolved="">' \
             '<colgroup>' \

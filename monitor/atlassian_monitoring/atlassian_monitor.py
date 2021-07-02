@@ -1,122 +1,167 @@
+import json
 import logging
 import logging.handlers
 import multiprocessing
 import datetime
+from enum import Enum
 
-from confluence_table_template import report_template
+from django.db import IntegrityError
+
+from confluence_table_template import confluence_body_template
 from .issue_processor import IssueProcessingBasics
 from monitor.models import Issue
+import json
+import logging
+import os
+from enum import Enum
+from nested_lookup import nested_lookup
+from atlassian import Confluence
+from atlassian import Jira
 
-logging.basicConfig(filename='cron.log')
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-file = logging.FileHandler('cron.log')
-file.setLevel(logging.INFO)
-# formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-logger.addHandler(file)
-"""
-python manage.py crontab add
-python manage.py crontab run cc96dca57171b6521384fa538a69f69d
-python manage.py crontab remove
-"""
-
-"""
-Проверяем через апи джиры наличие задач реди фор куа
-Проверяем их на наличие статьи-шаблона в конфе,
-Если нет, заводим статью шаблон с нужным именем и таблицей
-"""
+logger = logging.getLogger('django')
 
 
-class AtlassianMonitor(IssueProcessingBasics):
-    def __init__(self):
-        super(AtlassianMonitor, self).__init__()
+class FeatureReleases:
 
-    def jira_monitoring(self):
-        data = self.jira.jql(self.QA_QUERY)
-        for issue in data["issues"]:
-            issue_key = issue['key']
+    @staticmethod
+    def get_current_releases():
+        # If issue has report in confluence and not release reported - issue in near feature releases
+        issues_to_release = Issue.objects.filter(confluence_id=not None, release_report=False)
+        return set(release.release_name for release in issues_to_release)
 
-            links = self.jira.get_issue_remote_links(issue['id'])
-            # Условие для создания статьи с шаблоном отчета тестирования
-            if not self.find_confluence_mentions(doc=links) and not self._issue_already_processed(issue_key):
-                print('NOT')
-                #print(issue_key)
-                # Занести в SQLite
-                logger.info(f'Create issue object in database for {issue_key}.')
-                Issue.objects.create(issue_key=issue_key,
-                                     issue_summary=self.get_issue_summary(issue_key),
-                                     jira_url=self.jira.url + f"browse/{issue_key}",
-                                     release_name=self.get_release_name(issue_key),
-                                     issue_status=self._get_issue_status(issue_key=issue_key))
+    def get_feature_releases_info(self):
+        info = {release_name: {issue.issue_key: issue.issue_status
+                               for issue in Issue.objects.filter(release_name=release_name)}
+                for release_name in self.get_current_releases()}
+        return info
 
-    def confluence_monitoring(self):
-        # Плучаем данные из SQLite и для каждой производим проверку
-        # Для каждой записи из SQLite проверяем есть ли к ней отчет
-        issues = Issue.objects.all()
-        # issue = Issue.objects.first()
-        for issue in issues:
-            confluence_title = f'{issue.issue_key}. Отчет о тестировании'
-            if not self.confluence.page_exists(space="AT", title=confluence_title):
-                issue_status = self._get_issue_status(issue.issue_key)
-                # Создаем шаблон отчета
-                logger.info(f'Create report template for {issue.issue_key} in Confluence.')
-                #self.confluence.create_page(space='AT',
-                #                            # title = 'f'{issue.issue_key}. Отчет о тестировании'',
-                #                            title=confluence_title,
-                #                            body=report_template(issue_key=issue.issue_key,
-                #                                                 issue_url=issue.jira_url,
-                #                                                 issue_status=issue_status,
-                #                                                 issue_summary=issue.issue_summary),
-                                            # parent_id=MUSORKA,
-                #                            parent_id=37127275)
-                confluence_id = self.confluence.get_page_by_title(space="AT", title=confluence_title)
-                self.set_issue_confluence_id(issue_key=issue.issue_key, confluence_id=0)#confluence_id['id'])
-                # добавляем в links_to страницу в кофлюенсе
-            # Для тестирования во время разработки, проверяем на уже записанных в бд тасках что линка добавляется и апдейтится конф айди в бд
-            else:
-                confluence_id = self.confluence.get_page_by_title(space="AT", title=confluence_title)['id']
-                self.set_issue_confluence_id(issue_key=issue.issue_key, confluence_id=confluence_id)
-            #####################
-            current_issue = Issue.objects.get(issue_key=issue.issue_key)
-            links = self.jira.get_issue_remote_links(current_issue.issue_key)
-            if not self.find_confluence_mentions(doc=links):
-                print('ISSUE HAVE NO LINKS')
-                #self.jira.create_or_update_issue_remote_links(issue_key=current_issue.issue_key,
-                #                                              link_url=self.confluence_link(confluence_id),
-                #                                              title=confluence_title)
 
-            else:
-                print("pass")
+class IssueStates(Enum):
+    READY_FOR_QA = 'Ready for QA'
+    PASSED_QA = 'Passed QA'
+    IN_REGRESSION_TEST = 'In regression test'
+    READY_FOR_RELEASE = 'Ready for release'
+    RELEASED = 'Released to production'
+    IN_DEVELOPMENT = 'In development'
+
+
+class AtlassianMonitor:
+    JIRA_ISSUE_UPDATED = 'jira:issue_updated'
+    JIRA_ISSUE_CREATED = 'jira:issue_created'
+    ROOT_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    CONFIG_PATH = os.path.join(ROOT_PATH, 'config.json')
+
+    QA_QUERY = 'project = 4Slovo AND status = "Ready for QA" or status = "Passed QA" or status ' \
+               '= "In regression test" or status = "Ready for release" ORDER BY priority DESC'
+
+    confluence_viewpage = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId='
+    jira_issue_url_template = 'https://jira.4slovo.ru/browse/'
+    confluence_title = '{}. Отчет о тестировании'
+
+    def __init__(self, request):
+        self.config = json.load(open(self.CONFIG_PATH))
+        self.jira = Jira(url=self.config["JIRA_URL"],
+                         username=self.config["USERNAME"],
+                         password=self.config["PASSWORD"])
+        self.confluence = Confluence(url=self.config["CONFLUENCE_URL"],
+                                     username=self.config["USERNAME"],
+                                     password=self.config["PASSWORD"])
+
+        self.issue_states = IssueStates
+
+        self.decoded_request = json.loads(request.body.decode('utf-8'))
+        self.issue_key = self.get_issue_key()
+
+        self.issue_summary = self.get_issue_summary()
+        self.issue_status = self.get_issue_status()
+        self.release_name = self.get_release_name()
+
+        self.issue_event = self.decoded_request['webhookEvent']
+
+    def get_issue_key(self):
+        issue_key = self.decoded_request['issue']['key']
+        return issue_key
 
     def confluence_link(self, confluence_id):
         return ''.join([self.confluence_viewpage, str(confluence_id)])
 
-    # Проверяем таски уже занесенные в бд и имеющие шаблон отчета на факт смены статуса у задачи и обновляем его
-    # Далее необходимо переделать под вебхук
-    def check_and_update_issues(self):
-        issues = Issue.objects.all()
-        for issue in issues:
-            jira_issue_status = self._get_issue_status(issue.issue_key)
-            logger.info(f'Check status- {issue.jira_url}.')
-            # Вынести в update by status
-            if issue.issue_status != jira_issue_status and jira_issue_status in self._possible_states():
-                self._update_issue_status(issue_key=issue.issue_key, issue_status=jira_issue_status)
-            # В противном случае считаем что задача вернулась в разработку
-            elif issue.issue_status == jira_issue_status:
-                pass
-            else:
-                self._update_issue_status(issue_key=issue.issue_key,
-                                          issue_status=self.issue_states.IN_DEVELOPMENT.value)
-
-            # Вынести в update by release_name
-            jira_issue_release_name = self.get_release_name(issue.issue_key)
-            if issue.release_name != jira_issue_release_name:
-                self.update_issue_release_name(issue_key=issue.issue_key,
-                                               release=jira_issue_release_name)
-
-        # print(self.confluence.get_page_space(37127258))
-
     # Сейчас используется для тестирования в кроне, при переходе на вебхук - убрать
+
+    def get_issue_data(self):
+        return self.issue_summary, self.release_name, self.issue_status
+
+    def insert_issue_to_database(self, issue_summary, release_name, issue_status):
+        try:
+            Issue.objects.create(issue_key=self.issue_key,
+                                 jira_url=self.issue_url,
+                                 issue_summary=issue_summary,
+                                 release_name=release_name,
+                                 issue_status=issue_status)
+        except IntegrityError:
+            logger.info(f'Try insert issue that exists in DB: {self.issue_key}')
+
+    def check_and_update_issue(self):
+        # check - summary, issue, status, release_name
+        issue = Issue.objects.get(issue_key=self.issue_key)
+        if self.issue_summary != issue.issue_summary or \
+                self.issue_status != issue.issue_status or \
+                self.release_name != issue.release_name:
+            self.update_issue(issue, self.issue_summary, self.issue_status, self.release_name)
+
+    @staticmethod
+    def update_issue(issue, issue_summary, issue_status, release_name):
+        issue.issue_summary = issue_summary
+        issue.issue_status = issue_status
+        issue.release_name = release_name
+        issue.save()
+
+    def get_issue_summary(self):
+        return self.jira.issue_field_value(key=self.issue_key, field='summary')
+
+    def get_issue_status(self):
+        #return self.decoded_request['status']['name']
+        return self.jira.issue_field_value(self.issue_key, 'status')['name']
+
+    def issue_ready_for_qa(self):
+        return self.get_issue_status() == self.issue_states.READY_FOR_QA.value
+
+    def issue_is_rc(self):
+        return self.jira.issue_field_value(self.issue_key, 'issuetype')['name'] == 'RC'
+
+    def issue_url(self):
+        return ''.join([self.jira_issue_url_template, self.issue_key])
+
+    def get_release_name(self):
+        release_name = self.jira.issue_field_value(self.issue_key, 'fixVersions')
+        if release_name:
+            return release_name[0]['name']
+        else:
+            return None
+
+    def create_confluence_article(self):
+        print("CREATE ARRTICLE")
+        # return
+        #self.confluence.create_page(space='AT',
+        #                            title=self.confluence_title.format(self.issue_key),
+         #                           body=confluence_body_template())
+
+    #def report_template(self):
+    #    return confluence_body_template(issue_key=self.issue_key,
+     #                                   issue_url=self.issue_url(),
+    #                                    issue_status=self.issue_status)
+
+    def move_page(self):
+        # page_id = self.confluence.get_page_by_title()
+        # need get current year, release that task relate to,
+        release_name = 'ru.6.3.25'
+        year_release = datetime.datetime.today().year
+        # print(year_release)
+        _release_id = self.confluence.get_page_by_title(space="AT", title=f'Релиз {release_name} Отчет о тестировании')
+        # print(_release_id)
+        updated_issue = Issue.objects.get(issue_key='SLOV-6950')
+        page_id = updated_issue.confluence_id
+        confluence_title = f'{updated_issue.issue_key}. Отчет о тестировании'
+        self.confluence.update_page(page_id=page_id, title=confluence_title, parent_id=_release_id, )
 
     def all_release_tasks_ready(self, release_name):
         # get current state of tasks by
@@ -125,19 +170,6 @@ class AtlassianMonitor(IssueProcessingBasics):
                                            issue_status=self.issue_states.READY_FOR_RELEASE.value)
         all_release_tasks = Issue.objects.filter(release_name=release_name)
         return len(ready_tasks) == len(all_release_tasks)
-
-    def move_page(self):
-        #page_id = self.confluence.get_page_by_title()
-        # need get current year, release that task relate to,
-        release_name = 'ru.6.3.25'
-        year_release = datetime.datetime.today().year
-        #print(year_release)
-        _release_id = self.confluence.get_page_by_title(space="AT", title=f'Релиз {release_name} Отчет о тестировании')
-        #print(_release_id)
-        updated_issue = Issue.objects.get(issue_key='SLOV-6950')
-        page_id = updated_issue.confluence_id
-        confluence_title = f'{updated_issue.issue_key}. Отчет о тестировании'
-        self.confluence.update_page(page_id=page_id, title=confluence_title, parent_id=_release_id,)
 
     # For webhook -
     # Scope - project = 4Slovo
