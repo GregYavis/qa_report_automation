@@ -1,18 +1,12 @@
-import ctypes
-import json
 import logging
 
-from django.http import HttpResponse
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.views.generic import View
 
-import monitor
-from monitor import models
 from monitor.atlassian_monitoring.atlassian_monitor import AtlassianMonitor, FeatureReleases
-from monitor.atlassian_monitoring.issue_processor import IssueProcessingBasics
-from nested_lookup import nested_lookup
+
 # Create your views here.
-from monitor.models import Issue
+
 
 logger = logging.getLogger('django')
 
@@ -25,8 +19,7 @@ class MainPage(View, AtlassianMonitor):
         context = {'releases': current_releases}
         return render(self.request, 'main_page.html', context)
 
-    def post(self, *args, **kwargs):
-
+    def request_handler(self):
         if self.request.POST.get('monitor'):
             # launch monitor
             print(self.request.POST.get('monitor'))
@@ -35,49 +28,24 @@ class MainPage(View, AtlassianMonitor):
             print(self.request.POST.get('release_name'))
 
         else:
-            atl_monitor = AtlassianMonitor(request=self.request)
-            if atl_monitor.issue_is_rc():
-                return redirect('/')
+            monitor = AtlassianMonitor(request=self.request)
+            if monitor.issue_is_rc():
+                logger.info('Задача пропущена т.к. тип задачи RC')
+                # Если RC готова к релизу, создать шаблон для отчета об исследовательском тестировании
+                return
 
-            if atl_monitor.issue_event == atl_monitor.JIRA_ISSUE_UPDATED:
-                try:
-                    # get issue from DB
-                    logger.info('Check issue for status/name or summary updates')
-                    # update if issue updated
-                    atl_monitor.check_and_update_issue()
+            if monitor.issue_event == monitor.JIRA_ISSUE_UPDATED:
+                monitor.check_and_update_issue()
+                if monitor.issue_ready_for_qa():
+                    monitor.create_report()
+                    return
 
-                    if atl_monitor.issue_ready_for_qa():
-                        atl_monitor.create_confluence_article()
-
-                except models.Issue.DoesNotExist:
-                    # if not get
-                    atl_monitor.insert_issue_to_database(*atl_monitor.get_issue_data())
-                    # Write to DB too cause we must process updated issues before release AT176 too/
-                    logger.info('Create database entry for updated issue not writen in DB')
-            elif atl_monitor.issue_event == atl_monitor.JIRA_ISSUE_CREATED:
-
-                atl_monitor.insert_issue_to_database(*atl_monitor.get_issue_data())
+            elif monitor.issue_event == monitor.JIRA_ISSUE_CREATED:
+                monitor.save_issue()
                 logger.info('Create database entry for created issue')
+                return
 
-
-            # if Issue.objects.get(issue_key=issue_key):
-
-            # print(nested_lookup(key='key', document=request_json['issue']))
-            # print(nested_lookup(key='id', document=request_json['issue']))
-
-            # print(self.request.POST.get('email'))
-            # print(args, kwargs)
-            # print(self.atlassian_monitor.all_release_tasks_ready(release_name=self.request.POST.get('release_name')))
-            # print(self.request.POST.get('release_name'))
-            # get that release tasks ready -> launch move_task
-            # Process webhook data
-
+    def post(self, *args, **kwargs):
+        self.request_handler()
         return redirect('/')
 
-
-"""def report(request):
-    #print(request.method)
-        #release = Issue.objects.filter(release_name=request.POST)
-    if request.method == "POST":
-        print(request.POST.get('report_name'))
-        return HttpResponse(status=200)"""
