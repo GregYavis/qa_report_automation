@@ -3,8 +3,8 @@ import logging
 from django.shortcuts import render, redirect
 from django.views.generic import View
 
-from monitor.atlassian_monitoring.atlassian_monitor import AtlassianMonitor, FeatureReleases
-
+from monitor.atlassian_monitoring.atlassian_monitor import AtlassianMonitor
+from monitor.atlassian_monitoring.issue_processor import ReleaseProcessor
 # Create your views here.
 
 
@@ -12,10 +12,10 @@ logger = logging.getLogger('django')
 
 
 class MainPage(View, AtlassianMonitor):
-    issue_processor = FeatureReleases()
+    release_processor = ReleaseProcessor()
 
     def get(self, *args, **kwargs):
-        current_releases = self.issue_processor.get_feature_releases_info()
+        current_releases = self.release_processor.get_feature_releases_info()
         context = {'releases': current_releases}
         return render(self.request, 'main_page.html', context)
 
@@ -25,7 +25,9 @@ class MainPage(View, AtlassianMonitor):
             print(self.request.POST.get('monitor'))
         elif self.request.POST.get('release_name'):
             # launch monitor
-            print(self.request.POST.get('release_name'))
+            # Перекладывваем таски относящиеся к релизу в ГОД (parent id) > РЕЛИЗ (parent id) (шаблонг отчета) > ТАСКИ
+            country = self.release_processor.release_report(self.request)
+            print(country)
 
         else:
             monitor = AtlassianMonitor(request=self.request)

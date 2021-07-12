@@ -17,72 +17,46 @@ file.setLevel(logging.INFO)
 logger.addHandler(file)
 
 
+class IssueStates(Enum):
+    READY_FOR_QA = 'Ready for QA'
+    PASSED_QA = 'Passed QA'
+    IN_REGRESSION_TEST = 'In regression test'
+    READY_FOR_RELEASE = 'Ready for release'
+    RELEASED = 'Released to production'
 
 
+class ReleaseProcessor:
+    issue_states = IssueStates
 
-class IssueProcessingBasics:
-    ROOT_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-    CONFIG_PATH = os.path.join(ROOT_PATH, 'config.json')
-    # Шаблон запроса задач в статусе Ready for QA
-    # READY_FOR_QA_QUERY = 'project = 4Slovo AND status = "Ready for QA" ORDER BY priority DESC'
-    QA_QUERY = 'project = 4Slovo AND status = "Ready for QA" or status = "Passed QA" or status ' \
-               '= "In regression test" or status = "Ready for release" ORDER BY priority DESC'
+    def get_feature_releases_info(self):
+        issues_to_release = Issue.objects.filter(confluence_id__isnull=False,
+                                                 release_report=False,
+                                                 release_name__isnull=False)
+        feature_releases = set(issue.release_name for issue in issues_to_release if
+                               issue.issue_status in self._possible_states())
+        info = {release_name: {issue.issue_key: issue.issue_status
+                               for issue in Issue.objects.filter(release_name=release_name)}
+                for release_name in feature_releases}
+        return info
 
-    confluence_viewpage = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId='
-    jira_issue_url_template = 'https://jira.4slovo.ru/browse/'
-    confluence_title = '{}. Отчет о тестировании'
-
-    def __init__(self):
-        self.config = json.load(open(self.CONFIG_PATH))
-        self.jira = Jira(url=self.config["JIRA_URL"],
-                         username=self.config["USERNAME"],
-                         password=self.config["PASSWORD"])
-        self.confluence = Confluence(url=self.config["CONFLUENCE_URL"],
-                                     username=self.config["USERNAME"],
-                                     password=self.config["PASSWORD"])
+    def _possible_states(self):
+        return [e.value for e in self.issue_states if e not in
+                [self.issue_states.RELEASED, self.issue_states.READY_FOR_QA]]
 
 
-    @staticmethod
-    def _confluence_mentions_in_links(links):
-        return [link for link in links if 'name' in link['application'] and 'confluence' in link['object']['url']]
+    def release_report(self, request):
+        """
+        Получаем имя страны, текущий год
+        year_parent_id = id страницы с именем "Выпущенные релизы ГОД"
+        В папке года создаем отчет по релизу имя которого получили из value кнопки
+        Пример нового шаблона https://confluence.4slovo.ru/pages/viewpage.action?pageId=95485966
+        release_parent_id = id созданной страницы релиза
+        Все задачи относящиеся к данному релизу, переносим в папку релиза - меняется partner_id
+        :return:
+        """
+        release_country = request.POST.get('release_name').split('.')[0]
+        return release_country
 
-    def find_confluence_mentions(self, doc):
-        # [url for url in self.find_confluence_mentions(key='url', doc=links) if self.confluence_viewpage in url]
-        # print(nested_lookup('url', doc))
-        # return nested_lookup(key, doc)
-        return [url for url in nested_lookup('url', doc) if self.confluence_viewpage in url]
-
-
-
-    @staticmethod
-    def issue_already_processed(issue_key):
-        return Issue.objects.filter(issue_key=issue_key)
-
-
-    @staticmethod
-    def update_issue_status(issue_key, issue_status):
-        update_issue = Issue.objects.get(issue_key=issue_key)
-        update_issue.issue_status = issue_status
-        update_issue.save()
-        logger.info(f'Update status for {issue_key} to "{issue_status}".')
-
-
-
-
-    @staticmethod
-    def set_issue_confluence_id(issue_key, confluence_id):
-        update_issue = Issue.objects.get(issue_key=issue_key)
-        update_issue.confluence_id = confluence_id
-        update_issue.save()
-        logger.info(f'Set confluence ID for {issue_key} - "{confluence_id}".')
-
-    # to delete
-    @staticmethod
-    def update_issue_release_name(issue_key, release):
-        update_issue = Issue.objects.get(issue_key=issue_key)
-        update_issue.release_name = release
-        update_issue.save()
-        logger.info(f'Update release name for {issue_key} to "{release}".')
 
     # Проверяем таски уже занесенные в бд и имеющие шаблон отчета на факт смены статуса у задачи и обновляем его
     # Далее необходимо переделать под вебхук
@@ -110,7 +84,6 @@ class IssueProcessingBasics:
 
         # print(self.confluence.get_page_space(37127258))
         """
-
 
     """
     def jira_monitoring(self):
@@ -171,4 +144,3 @@ class IssueProcessingBasics:
             else:
                 print("pass")
 """
-

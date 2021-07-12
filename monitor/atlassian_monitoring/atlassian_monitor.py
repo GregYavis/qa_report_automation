@@ -7,38 +7,14 @@ from enum import Enum
 from atlassian import Confluence
 from atlassian import Jira
 from django.db import IntegrityError
-
-from confluence_table_template import confluence_body_template
+from .issue_processor import IssueStates
+from confluence_table_template import report_template
 from monitor.models import Issue
 from .. import models
 
 logger = logging.getLogger('django')
 
 
-class IssueStates(Enum):
-    READY_FOR_QA = 'Ready for QA'
-    PASSED_QA = 'Passed QA'
-    IN_REGRESSION_TEST = 'In regression test'
-    READY_FOR_RELEASE = 'Ready for release'
-    RELEASED = 'Released to production'
-
-
-class FeatureReleases:
-    issue_states = IssueStates
-
-    def get_feature_releases_info(self):
-        issues_to_release = Issue.objects.filter(confluence_id__isnull=False,
-                                                 release_report=False,
-                                                 release_name__isnull=False)
-        feature_releases = set(issue.release_name for issue in issues_to_release if
-                               issue.issue_status in self._possible_states())
-        info = {release_name: {issue.issue_key: issue.issue_status
-                               for issue in Issue.objects.filter(release_name=release_name)}
-                for release_name in feature_releases}
-        return info
-
-    def _possible_states(self):
-        return [e.value for e in self.issue_states if e != self.issue_states.RELEASED]
 
 
 class AtlassianMonitor:
@@ -165,12 +141,6 @@ class AtlassianMonitor:
         else:
             return None
 
-    def report_template(self):
-        return confluence_body_template(issue_key=self.issue_key,
-                                        issue_url=self.issue_url,
-                                        issue_status=self.issue_status,
-                                        issue_summary=self.issue_summary)
-
     # def confluence_report_exists(self):
     #    print(self.confluence.get_page_by_title(space="AT", title=self.confluence_title().format(self.issue_key)))
     #    return self.confluence.page_exists(space="AT", title=self.confluence_title().format(self.issue_key))
@@ -195,7 +165,7 @@ class AtlassianMonitor:
         logger.info(f'Create confluence article for {self.issue_key}')
         self.confluence.create_page(space='AT',
                                     title=self.confluence_title(),
-                                    body=self.report_template(),
+                                    body=report_template(self.issue_key),
                                     parent_id=self.qa_reports_page_id)
         self.set_issue_confluence_id()
 
