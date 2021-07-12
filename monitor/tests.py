@@ -83,25 +83,19 @@ class AtlassianMonitor:
                                 username='g.kozlov',
                                 password='Khamul_54321')
         issues = self.tasks
-        for issue in issues:
-            if not confluence.page_exists(space="AT", title=f'{issue}. Отчет о тестировании'):
-                print('No report')
+        #for issue in issues:
+        if not confluence.page_exists(space="AT", title=f'SLOV-TEST. Отчет о тестировании'):
+            print('No report')
                 # Создаем шаблон отчета
-                #self.confluence.create_page(space='AT',
-                #                            # title = 'f'{issue.issue_key}. Отчет о тестировании'',
-                #                            title='Testing At-176/3 task, need to delete',
-                #                            body=report_template(issue_key=issue,
-                #                                                 issue_url='https://jira.4slovo.ru/browse/' + issue,
-                #                                                 issue_status=self.jira.issue_field_value(issue, 'status')['name'],
-                #                                                 issue_summary=self.jira.issue_field_value(key=issue,
-                #                                                                                      field='summary')),
-                #                            # parent_id=MUSORKA,
-                #                            parent_id=37127275)
+            self.confluence.create_page(space='AT',
+                                        title = f'SLOV-TEST. Отчет о тестировании',
+                                        body=report_template(issue_key='SLOV-7021'),
+                                        parent_id=37127275)
 
 
 if __name__ == '__main__':
     a = AtlassianMonitor()
-    a.jira_ready_for_qa_monitoring()
+    a.confluence_monitoring()
     # print(len('Released to production'))
     #print(a.get_release_name('SLOV-6006'))
     # print(a._possible_states())
