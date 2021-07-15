@@ -1,3 +1,4 @@
+
 def report_template(issue_key):
     table = '<table class="relative-table tablesorter tablesorter-default stickyTableHeaders confluenceTable" style="width: 68.4398%">' \
          '<colgroup>' \

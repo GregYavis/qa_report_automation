@@ -4,14 +4,14 @@ from django.shortcuts import render, redirect
 from django.views.generic import View
 
 from monitor.atlassian_monitoring.atlassian_monitor import AtlassianMonitor
-from monitor.atlassian_monitoring.issue_processor import ReleaseProcessor
-# Create your views here.
 
+# Create your views here.
+from monitor.atlassian_monitoring.issue_processor import ReleaseProcessor
 
 logger = logging.getLogger('django')
 
 
-class MainPage(View, AtlassianMonitor):
+class MainPage(View):
     release_processor = ReleaseProcessor()
 
     def get(self, *args, **kwargs):
@@ -22,7 +22,9 @@ class MainPage(View, AtlassianMonitor):
     def request_handler(self):
         if self.request.POST.get('monitor'):
             # launch monitor
-            print(self.request.POST.get('monitor'))
+            #print(self.request.POST)
+            print(self.request.body.decode('utf-8'), type(self.request.body.decode('utf-8')))
+            #print(self.request.POST.get('monitor'))
         elif self.request.POST.get('release_name'):
             # launch monitor
             # Перекладывваем таски относящиеся к релизу в ГОД (parent id) > РЕЛИЗ (parent id) (шаблонг отчета) > ТАСКИ

@@ -1,11 +1,13 @@
 import json
 import logging
 import os
+from datetime import datetime
 from enum import Enum
 from nested_lookup import nested_lookup
 from atlassian import Confluence
 from atlassian import Jira
 
+from monitor.atlassian_monitoring.base import AtlassianConfig
 from monitor.models import Issue
 
 logging.basicConfig(filename='cron.log')
@@ -17,16 +19,13 @@ file.setLevel(logging.INFO)
 logger.addHandler(file)
 
 
-class IssueStates(Enum):
-    READY_FOR_QA = 'Ready for QA'
-    PASSED_QA = 'Passed QA'
-    IN_REGRESSION_TEST = 'In regression test'
-    READY_FOR_RELEASE = 'Ready for release'
-    RELEASED = 'Released to production'
 
 
-class ReleaseProcessor:
-    issue_states = IssueStates
+
+class ReleaseProcessor(AtlassianConfig):
+
+    def __init__(self):
+        super(ReleaseProcessor, self).__init__()
 
     def get_feature_releases_info(self):
         issues_to_release = Issue.objects.filter(confluence_id__isnull=False,
@@ -43,7 +42,6 @@ class ReleaseProcessor:
         return [e.value for e in self.issue_states if e not in
                 [self.issue_states.RELEASED, self.issue_states.READY_FOR_QA]]
 
-
     def release_report(self, request):
         """
         Получаем имя страны, текущий год
@@ -55,8 +53,11 @@ class ReleaseProcessor:
         :return:
         """
         release_country = request.POST.get('release_name').split('.')[0]
+        year = datetime.now().year
+        print(year)
+        print(self.confluence.get_page_by_title(space='AT', title=f'Выпущенные релизы {year}')['id'])
+        # self.confluence.get_page_by_title(space="AT", title=confluence_title)
         return release_country
-
 
     # Проверяем таски уже занесенные в бд и имеющие шаблон отчета на факт смены статуса у задачи и обновляем его
     # Далее необходимо переделать под вебхук

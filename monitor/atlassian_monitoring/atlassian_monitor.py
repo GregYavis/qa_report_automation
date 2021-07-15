@@ -3,11 +3,13 @@ import json
 import logging
 import os
 from enum import Enum
-
+from datetime import datetime
 from atlassian import Confluence
 from atlassian import Jira
 from django.db import IntegrityError
-from .issue_processor import IssueStates
+
+from .base import AtlassianConfig
+
 from confluence_table_template import report_template
 from monitor.models import Issue
 from .. import models
@@ -15,33 +17,13 @@ from .. import models
 logger = logging.getLogger('django')
 
 
-
-
-class AtlassianMonitor:
-    JIRA_ISSUE_UPDATED = 'jira:issue_updated'
-    JIRA_ISSUE_CREATED = 'jira:issue_created'
-    ROOT_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-    CONFIG_PATH = os.path.join(ROOT_PATH, 'config.json')
-
-    QA_QUERY = 'project = 4Slovo AND status = "Ready for QA" or status = "Passed QA" or status ' \
-               '= "In regression test" or status = "Ready for release" ORDER BY priority DESC'
-
-    confluence_viewpage = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId='
-    # confluence_title = '{}. Отчет о тестировании'
-    qa_reports_page_id = 37127275
+class AtlassianMonitor(AtlassianConfig):
 
     def __init__(self, request):
-        self.config = json.load(open(self.CONFIG_PATH))
-        self.jira = Jira(url=self.config["JIRA_URL"],
-                         username=self.config["USERNAME"],
-                         password=self.config["PASSWORD"])
-        self.confluence = Confluence(url=self.config["CONFLUENCE_URL"],
-                                     username=self.config["USERNAME"],
-                                     password=self.config["PASSWORD"])
-
-        self.issue_states = IssueStates
+        super(AtlassianMonitor, self).__init__()
 
         self.request = json.loads(request.body.decode('utf-8'))
+
         self.issue_key = self.get_issue_key()
         self.issue_url = ''.join(['https://jira.4slovo.ru/browse/', self.issue_key])
 
@@ -169,6 +151,8 @@ class AtlassianMonitor:
                                     parent_id=self.qa_reports_page_id)
         self.set_issue_confluence_id()
 
+
+
     def move_page(self):
         # page_id = self.confluence.get_page_by_title()
         # need get current year, release that task relate to,
@@ -197,3 +181,7 @@ class AtlassianMonitor:
     # process a request, depending on request data launch update_issue,
 
     # a.confluence_monitoring("SLOV-6936")
+
+
+
+
