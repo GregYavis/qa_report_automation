@@ -7,15 +7,23 @@
 
 <!-- Custom CSS -->
 
-
 {% include 'navbar.html' %}
 {% block content %}
+    {% if messages %}
+        {% for message in messages %}
+
+  <button class="text-center alert alert-{{message.tags}} alert-dismissible fade show" role="alert"type="button" data-bs-dismiss="alert" aria-label="Close" style="width: 100%; margin: auto;">{{message}}</button>
+
+        {% endfor %}
+    {% endif %}
+
     <div class="container text-center" style="margin-top: 10px">
-    <a>For testing only</a>
-    <form action="{% url 'monitor:main-page' %}" method="POST">
+
+    {% comment %}<form action="{% url 'monitor:main-page' %}" method="POST">
     <button type="submit" class="btn btn-outline-primary btn-sm" name="monitor" value="jira">Start jira monitor</button>
     <button type="submit" class="btn btn-outline-primary btn-sm" name="monitor" value="confluence">Confluence monitor</button>
-     </form>
+    </form>
+    {% endcomment %}
         {% for release_name, issues in releases.items %}
         <p style="margin-top: 20px; margin-bottom: 20px">
         <form action="{% url 'monitor:main-page' %}" method="POST">
@@ -23,25 +31,26 @@
             <button type="submit" class="btn btn-outline-primary btn-sm" name="release_name" value="{{ release_name }}">Generate release report</button>
         </form>
         </p>
-        <table border="1" align="center">
+
+        <table class="table table-bordered border-primary" style="width: 70%; margin: auto;">
             <thead>
             <tr>
                 <th>Issue</th>
-                <th width="200">Status</th>
+                <th>Status</th>
             </tr>
             </thead>
             {% for issue, status in issues.items %}
                 <tbody>
                 <tr>
-                    <td>{{ issue }}</td>
-                    <td>{{ status }}</td>
+                    <td style="width: 30%">{{ issue }}</td>
+                    <td style="width: 16.66%">{{ status }}</td>
                 </tr>
                 </tbody>
             {% endfor %}
         </table>
 
     {% endfor %}
-</div>
+    </div>
 
 
 {% endblock %}

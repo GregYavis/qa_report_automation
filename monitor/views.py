@@ -1,5 +1,5 @@
 import logging
-
+from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.views.generic import View
 
@@ -12,24 +12,29 @@ logger = logging.getLogger('django')
 
 
 class MainPage(View):
-    release_processor = ReleaseProcessor()
+
 
     def get(self, *args, **kwargs):
-        current_releases = self.release_processor.get_feature_releases_info()
+        release_processor = ReleaseProcessor(self.request)
+        current_releases = release_processor.get_feature_releases_info()
         context = {'releases': current_releases}
         return render(self.request, 'main_page.html', context)
 
     def request_handler(self):
-        if self.request.POST.get('monitor'):
-            # launch monitor
-            #print(self.request.POST)
-            print(self.request.body.decode('utf-8'), type(self.request.body.decode('utf-8')))
-            #print(self.request.POST.get('monitor'))
-        elif self.request.POST.get('release_name'):
+        release_processor = ReleaseProcessor(self.request)
+        #if self.request.POST.get('monitor'):
+        #    # launch monitor
+        #    #print(self.request.POST)
+        #    print(self.request.body.decode('utf-8'), type(self.request.body.decode('utf-8')))
+        #    #print(self.request.POST.get('monitor'))
+        if self.request.POST.get('release_name'):
             # launch monitor
             # Перекладывваем таски относящиеся к релизу в ГОД (parent id) > РЕЛИЗ (parent id) (шаблонг отчета) > ТАСКИ
-            country = self.release_processor.release_report(self.request)
-            print(country)
+            if release_processor.release_ready_for_report(self.request.POST.get('release_name')):
+                release_processor.create_release_report()
+            else:
+                messages.warning(self.request, 'Не все задачи из релиза прошли тестирование')
+
 
         else:
             monitor = AtlassianMonitor(request=self.request)

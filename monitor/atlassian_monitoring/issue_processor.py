@@ -1,31 +1,26 @@
-import json
 import logging
-import os
 from datetime import datetime
-from enum import Enum
-from nested_lookup import nested_lookup
-from atlassian import Confluence
-from atlassian import Jira
 
 from monitor.atlassian_monitoring.base import AtlassianConfig
 from monitor.models import Issue
+from confluence_table_template import release_report_template
 
 logging.basicConfig(filename='cron.log')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 file = logging.FileHandler('cron.log')
 file.setLevel(logging.INFO)
-# formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 logger.addHandler(file)
-
-
-
 
 
 class ReleaseProcessor(AtlassianConfig):
 
-    def __init__(self):
+    def __init__(self, request):
         super(ReleaseProcessor, self).__init__()
+        self.year_of_release_title = 'Выпущенные релизы {}'
+        self.release_report_title = 'Релиз {} Отчет о тестировании'
+        self.request = request
+
 
     def get_feature_releases_info(self):
         issues_to_release = Issue.objects.filter(confluence_id__isnull=False,
@@ -42,8 +37,18 @@ class ReleaseProcessor(AtlassianConfig):
         return [e.value for e in self.issue_states if e not in
                 [self.issue_states.RELEASED, self.issue_states.READY_FOR_QA]]
 
-    def release_report(self, request):
+    @staticmethod
+    def release_ready_for_report(release_name: str):
+        issues_in_release = Issue.objects.filter(release_name=release_name)
+        ready_issues = Issue.objects.filter(release_name=release_name, issue_status='In regression test')
+        return list(issues_in_release) == list(ready_issues)
+
+    def get_year_parent_page(self):
+        return self.confluence.get_page_by_title(space='AT', title=f'Выпущенные релизы {datetime.now().year}')['id']
+
+    def create_release_report(self):
         """
+        Проверяем что все таски из релиза в статусе ready for release
         Получаем имя страны, текущий год
         year_parent_id = id страницы с именем "Выпущенные релизы ГОД"
         В папке года создаем отчет по релизу имя которого получили из value кнопки
@@ -52,12 +57,18 @@ class ReleaseProcessor(AtlassianConfig):
         Все задачи относящиеся к данному релизу, переносим в папку релиза - меняется partner_id
         :return:
         """
-        release_country = request.POST.get('release_name').split('.')[0]
-        year = datetime.now().year
-        print(year)
-        print(self.confluence.get_page_by_title(space='AT', title=f'Выпущенные релизы {year}')['id'])
+        release_name = self.request.POST.get('release_name')
+        country = self.request.POST.get('release_name').split('.')[0]
+        year_parent_page = self.get_year_parent_page()
+        print(release_name, country, year_parent_page)
+        # Создаем шаблон релиза
+        #self.confluence.create_page(space='AT',
+        #                            title=self.release_report_title.format(release_name),
+        #                            body=release_report_template(country=country),
+        #                            parent_id=year_parent_page)
+
+
         # self.confluence.get_page_by_title(space="AT", title=confluence_title)
-        return release_country
 
     # Проверяем таски уже занесенные в бд и имеющие шаблон отчета на факт смены статуса у задачи и обновляем его
     # Далее необходимо переделать под вебхук

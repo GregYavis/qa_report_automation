@@ -1,17 +1,13 @@
 import datetime
 import json
 import logging
-import os
-from enum import Enum
 from datetime import datetime
-from atlassian import Confluence
-from atlassian import Jira
+
 from django.db import IntegrityError
 
-from .base import AtlassianConfig
-
-from confluence_table_template import report_template
+from confluence_table_template import issue_report_template
 from monitor.models import Issue
+from .base import AtlassianConfig
 from .. import models
 
 logger = logging.getLogger('django')
@@ -147,7 +143,7 @@ class AtlassianMonitor(AtlassianConfig):
         logger.info(f'Create confluence article for {self.issue_key}')
         self.confluence.create_page(space='AT',
                                     title=self.confluence_title(),
-                                    body=report_template(self.issue_key),
+                                    body=issue_report_template(self.issue_key),
                                     parent_id=self.qa_reports_page_id)
         self.set_issue_confluence_id()
 
