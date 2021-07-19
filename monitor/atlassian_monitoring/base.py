@@ -2,7 +2,7 @@ import json
 import json
 import os
 from enum import Enum
-
+from monitor.models import Issue
 from atlassian import Confluence
 from atlassian import Jira
 
@@ -25,8 +25,9 @@ class AtlassianConfig:
                '= "In regression test" or status = "Ready for release" ORDER BY priority DESC'
 
     confluence_viewpage = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId='
-    # confluence_title = '{}. Отчет о тестировании'
+
     qa_reports_page_id = 37127275
+    confluence_title = '{}. Отчет о тестировании'
 
     def __init__(self):
         self.config = json.load(open(self.CONFIG_PATH))
@@ -38,3 +39,8 @@ class AtlassianConfig:
                                      password=self.config["PASSWORD"])
 
         self.issue_states = IssueStates
+
+    @staticmethod
+    def confluence_mentions_in_links(links):
+        return [link for link in links if 'name' in link['application'] and 'confluence' in link['object']['url']]
+

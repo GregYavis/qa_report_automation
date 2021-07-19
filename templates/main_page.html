@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>QA-automation</title>
 </head>
 
 <!-- Custom CSS -->
@@ -18,11 +18,16 @@
     {% endif %}
 
     <div class="container text-center" style="margin-top: 10px">
-
-    {% comment %}<form action="{% url 'monitor:main-page' %}" method="POST">
-    <button type="submit" class="btn btn-outline-primary btn-sm" name="monitor" value="jira">Start jira monitor</button>
-    <button type="submit" class="btn btn-outline-primary btn-sm" name="monitor" value="confluence">Confluence monitor</button>
+    {% if not releases and not has_issue%}
+    <form action="{% url 'monitor:main-page' %}" method="POST">
+    <button type="submit" class="btn btn-outline-primary btn-sm" name="monitor" value="jira">Мониторинг ближайших к релизу задач</button>
     </form>
+    {% elif not releases and has_issue %}
+    <button type="submit" class="btn btn-outline-primary btn-sm">Нет задач к релизу</button>
+
+    {% endif %}
+    {% comment %}<button type="submit" class="btn btn-outline-primary btn-sm" name="monitor" value="confluence">Confluence monitor</button>
+
     {% endcomment %}
         {% for release_name, issues in releases.items %}
         <p style="margin-top: 20px; margin-bottom: 20px">
@@ -32,18 +37,22 @@
         </form>
         </p>
 
-        <table class="table table-bordered border-primary" style="width: 70%; margin: auto;">
+        <table class="table table-bordered border-primary" style="margin: auto;">
             <thead>
             <tr>
                 <th>Issue</th>
+                <th>Summary</th>
                 <th>Status</th>
             </tr>
             </thead>
-            {% for issue, status in issues.items %}
+            {% for issue, data in issues.items %}
                 <tbody>
                 <tr>
-                    <td style="width: 30%">{{ issue }}</td>
-                    <td style="width: 16.66%">{{ status }}</td>
+                    <td style="width: 16.66%"><a href="{{ data.url }}">{{ issue }}</a></td>
+
+                    <td style="width: 70%">{{ data.summary }}</td>
+                    <td style="width: 16.66%">{{ data.status }}</td>
+
                 </tr>
                 </tbody>
             {% endfor %}

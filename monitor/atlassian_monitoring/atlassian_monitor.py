@@ -1,7 +1,5 @@
-import datetime
 import json
 import logging
-from datetime import datetime
 
 from django.db import IntegrityError
 
@@ -27,10 +25,6 @@ class AtlassianMonitor(AtlassianConfig):
         self.release_name = self.get_release_name()
         self.issue_summary = self.get_issue_summary()
         self.issue_event = self.request['webhookEvent']
-        print(self.issue_key)
-        print(self.issue_status)
-        print(self.release_name)
-        print(self.issue_summary)
 
     def issue(self):
         return Issue.objects.get(issue_key=self.issue_key)
@@ -41,9 +35,6 @@ class AtlassianMonitor(AtlassianConfig):
 
     def confluence_link(self, confluence_id):
         return ''.join([self.confluence_viewpage, str(confluence_id)])
-
-    def confluence_title(self):
-        return f'{self.issue_key}. Отчет о тестировании'
 
     def get_issue_data(self):
         return self.issue_summary, self.release_name, self.issue_status
@@ -56,7 +47,7 @@ class AtlassianMonitor(AtlassianConfig):
                                  issue_status=self.issue_status,
                                  confluence_id=self.confluence_page_id())
         except IntegrityError:
-            logger.info(f'Try insert issue that exists in DB: {self.issue_key}')
+            logger.info(f'Задача {self.issue_key} уже занесена в БД')
 
     def check_and_update_issue(self):
         """
@@ -88,17 +79,17 @@ class AtlassianMonitor(AtlassianConfig):
         issue.save()
 
     def confluence_page_id(self):
-        if self.confluence.page_exists(space="AT", title=self.confluence_title().format(self.issue_key)):
-            return self.confluence.get_page_by_title(space="AT", title=self.confluence_title().format(self.issue_key))[
-                'id']
+        if self.confluence.page_exists(space="AT", title=self.confluence_title.format(self.issue_key)):
+            return self.confluence.get_page_by_title(space="AT",
+                                                     title=self.confluence_title.format(self.issue_key))['id']
         else:
             return None
 
     def set_issue_confluence_id(self):
+        logger.info(f'Добавлен confluence_id отчета задачи {self.issue_key}')
         issue = self.issue()
         issue.confluence_id = self.confluence_page_id()
         issue.save()
-        logger.info(f'Set confluence ID for {issue.issue_key} - "{issue.confluence_id}".')
 
     def get_issue_summary(self):
         return self.request['issue']['fields']['summary']
@@ -119,10 +110,6 @@ class AtlassianMonitor(AtlassianConfig):
         else:
             return None
 
-    # def confluence_report_exists(self):
-    #    print(self.confluence.get_page_by_title(space="AT", title=self.confluence_title().format(self.issue_key)))
-    #    return self.confluence.page_exists(space="AT", title=self.confluence_title().format(self.issue_key))
-
     def create_report(self):
         """
         Если в ДБ нет id статьи и в конфе нет статьи с тестированием задачи - создаем её.
@@ -134,50 +121,19 @@ class AtlassianMonitor(AtlassianConfig):
         if not issue.confluence_id and not self.confluence_page_id():
             self._create_article()
         elif not issue.confluence_id and self.confluence_page_id():
-            logger.info(f'Update issue {self.issue_key} in DB, insert confluence_id of article')
             self.set_issue_confluence_id()
         elif issue.confluence_id:
             return
 
     def _create_article(self):
-        logger.info(f'Create confluence article for {self.issue_key}')
+        logger.info(f'Создана статья с шаблоном для отчета по тестированию задачи {self.issue_key}')
         self.confluence.create_page(space='AT',
-                                    title=self.confluence_title(),
+                                    title=self.confluence_title.format(self.issue_key),
                                     body=issue_report_template(self.issue_key),
                                     parent_id=self.qa_reports_page_id)
         self.set_issue_confluence_id()
-
-
-
-    def move_page(self):
-        # page_id = self.confluence.get_page_by_title()
-        # need get current year, release that task relate to,
-        release_name = 'ru.6.3.25'
-        year_release = datetime.datetime.today().year
-        # print(year_release)
-        _release_id = self.confluence.get_page_by_title(space="AT", title=f'Релиз {release_name} Отчет о тестировании')
-        # print(_release_id)
-        updated_issue = Issue.objects.get(issue_key='SLOV-6950')
-        page_id = updated_issue.confluence_id
-        confluence_title = f'{updated_issue.issue_key}. Отчет о тестировании'
-        self.confluence.update_page(page_id=page_id, title=confluence_title, parent_id=_release_id, )
-
-    def all_release_tasks_ready(self, release_name):
-        # get current state of tasks by
-        # self.check_and_update_issues()
-        ready_tasks = Issue.objects.filter(release_name=release_name,
-                                           issue_status=self.issue_states.READY_FOR_RELEASE.value)
-        all_release_tasks = Issue.objects.filter(release_name=release_name)
-        return len(ready_tasks) == len(all_release_tasks)
-
-    # For webhook -
-    # Scope - project = 4Slovo
-    # Events - Issue Updated, Issue Created ...
-    # Send post request to work machine with server
-    # process a request, depending on request data launch update_issue,
-
-    # a.confluence_monitoring("SLOV-6936")
-
-
-
-
+        # Создать линку на созданную статью к задаче в jira
+        issue = self.issue()
+        self.jira.create_or_update_issue_remote_links(issue_key=self.issue_key,
+                                                      link_url=self.confluence_link(issue.confluence_id),
+                                                      title=self.confluence_title.format(self.issue_key))
