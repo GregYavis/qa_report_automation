@@ -1,9 +1,9 @@
 import logging
 from datetime import datetime
 
+from confluence_table_template import release_report_template, issue_report_template
 from monitor.atlassian_monitoring.base import AtlassianConfig
 from monitor.models import Issue
-from confluence_table_template import release_report_template, issue_report_template
 
 logging.basicConfig(filename='cron.log')
 logger = logging.getLogger(__name__)
@@ -102,7 +102,7 @@ class ReleaseProcessor(AtlassianConfig):
                                                           [self.confluence_viewpage, str(new_article_confluence_id)]),
                                                       title=self.confluence_title.format(issue.issue_key))
 
-    # Обрабатываем текущие таски в статусах 'Ready for QA' 'Passed QA' 'In regression test' 'Ready for release'
+
     def jira_monitoring(self):
         data = self.jira.jql(self.QA_QUERY)
         for issue in data["issues"]:
