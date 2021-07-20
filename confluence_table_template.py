@@ -76,6 +76,8 @@ def release_report_template(country):
         checklist_link = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId=37127178'
     elif country == 'kz':
         checklist_link = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId=40370935'
+    elif country == 'ge':
+        checklist_link = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId=47383257'
     template = '<p class="auto-cursor-target">' \
                f'<a href="{checklist_link}">Чеклист тестирования релиза {country}</a>' \
                '</p>' \
