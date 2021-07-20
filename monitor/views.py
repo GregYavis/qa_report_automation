@@ -1,14 +1,16 @@
 import logging
+
 from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.views.generic import View
 
 from monitor.atlassian_monitoring.atlassian_monitor import AtlassianMonitor
-from monitor.models import Issue
-# Create your views here.
+
 from monitor.atlassian_monitoring.issue_processor import ReleaseProcessor
+from monitor.models import Issue
 
 logger = logging.getLogger('django')
+# Create your views here.
 
 
 class MainPage(View):
@@ -24,6 +26,7 @@ class MainPage(View):
     def request_handler(self):
         release_processor = ReleaseProcessor(self.request)
         if self.request.POST.get('monitor'):
+            # Обрабатываем текущие таски в статусах 'Ready for QA' 'Passed QA' 'In regression test' 'Ready for release'
             release_processor.jira_monitoring()
             return
 

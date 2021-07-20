@@ -114,7 +114,6 @@ class AtlassianMonitor(AtlassianConfig):
         Если в ДБ нет id статьи и в конфе нет статьи с тестированием задачи - создаем её.
         Если нет только айди - записываем его в ДБ,
         Если id есть - возвращаемся.
-        :return:
         """
         issue = self.issue()
         if not issue.confluence_id and not self.confluence_page_id():
