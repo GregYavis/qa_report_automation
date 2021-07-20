@@ -35,14 +35,24 @@ class ReleaseProcessor(AtlassianConfig):
         return info
 
     def _release_states(self):
-        return [e.value for e in self.issue_states if e not in
-                [self.issue_states.RELEASED, self.issue_states.READY_FOR_QA]]
+        return [e.value for e in self.issue_states if e not in [self.issue_states.READY_FOR_QA]]
 
-    @staticmethod
-    def release_ready_for_report(release_name: str):
+
+    def release_ready_for_report(self, release_name: str):
         issues_in_release = Issue.objects.filter(release_name=release_name)
-        ready_issues = Issue.objects.filter(release_name=release_name, issue_status='In regression test')
+        ready_issues = Issue.objects.filter(release_name=release_name,
+                                            issue_status=self.issue_states.RELEASED.value)
         return list(issues_in_release) == list(ready_issues)
+
+    def move_page(self, issue, release_report_id):
+        self.confluence.update_page(page_id=issue.confluence_id,
+                                    title=self.confluence_title.format(issue.issue_key),
+                                    parent_id=release_report_id)
+        issue.release_report = True
+        issue.save()
+
+    def confluence_page(self, title):
+        return self.confluence.get_page_by_title(space='AT', title=title)
 
     def create_release_report(self):
         """
@@ -51,26 +61,23 @@ class ReleaseProcessor(AtlassianConfig):
         Пример нового шаблона https://confluence.4slovo.ru/pages/viewpage.action?pageId=95485966
         release_parent_id = id созданной страницы релиза
         Все задачи относящиеся к данному релизу, переносим в папку релиза - меняется partner_id
-        :return:
         """
         release_name = self.request.POST.get('release_name')
         country = self.request.POST.get('release_name').split('.')[0]
-        year_id = self.confluence.get_page_by_title(space='AT',
-                                                    title=f'Выпущенные релизы {datetime.now().year}')['id']
+        year_id = self.confluence_page(title=f'Выпущенные релизы {datetime.now().year}')['id']
         release_title = self.release_report_title.format(release_name)
+
         # Создаем шаблон релиза
         self.confluence.create_page(space='AT',
                                     title=release_title,
                                     body=release_report_template(country=country),
                                     parent_id=year_id)
+
         # Далее получаем таски релиза release_name
         release_issues = Issue.objects.filter(release_name=release_name)
-
-        release_report_id = self.confluence.get_page_by_title(space='AT', title=release_title)['id']
+        release_report_id = self.confluence_page(title=release_title)['id']
         for issue in release_issues:
-            self.confluence.update_page(page_id=issue.confluence_id,
-                                        title=self.confluence_title.format(issue.issue_key),
-                                        parent_id=release_report_id)
+            self.move_page(issue, release_report_id)
 
     def get_release_name(self, issue_key):
         release_name = self.jira.issue_field_value(issue_key, 'fixVersions')
@@ -92,16 +99,15 @@ class ReleaseProcessor(AtlassianConfig):
             return None
 
     def create_link(self, issue):
-        new_article_confluence_id = self.confluence.get_page_by_title(space="AT",
-                                                                      title=self.confluence_title.format(
-                                                                          issue.issue_key))['id']
+        new_article_confluence_id = self.confluence_page(title=self.confluence_title.format(issue.issue_key))['id']
         self.jira.create_or_update_issue_remote_links(issue_key=issue.issue_key,
                                                       link_url=''.join(
                                                           [self.confluence_viewpage, str(new_article_confluence_id)]),
                                                       title=self.confluence_title.format(issue.issue_key))
 
-    def issue_has_report(self, issue_key):
-        return self.confluence.get_page_by_title(space='AT', title=self.confluence_title.format(issue_key))
+    def issue_need_report(self, issue_key):
+        return not self.confluence_page(title=self.confluence_title.format(issue_key)) and \
+               self.get_issue_status(issue_key) == self.issue_states.READY_FOR_QA.value
 
     def jira_monitoring(self):
         data = self.jira.jql(self.QA_QUERY)
@@ -118,7 +124,14 @@ class ReleaseProcessor(AtlassianConfig):
                                  confluence_id=confluence_id)
 
             issue = Issue.objects.get(issue_key=issue_key)
-            if not self.issue_has_report(issue_key) and not confluence_id:
+            print(not self.issue_need_report(issue_key))
+            print('ID')
+            print(confluence_id)
+            print('issue_has+report')
+            print(self.confluence_page(title=self.confluence_title.format(issue_key)) and self.get_issue_status(
+                issue_key) == self.issue_states.READY_FOR_QA.value)
+
+            if self.issue_need_report(issue_key) and not confluence_id:
                 logger.info(f'Создание шаблона отчета для задачи {issue_key}.')
                 self.confluence.create_page(space='AT',
                                             title=self.confluence_title.format(issue_key),

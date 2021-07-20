@@ -54,7 +54,6 @@ class AtlassianMonitor(AtlassianConfig):
         Достаем таску из ДБ, если ее там нету, то она ранее не обрабатывалась
         Задач по webhookEvent = issue_updated будет много на старте,
         поэтому их тоже надо добавлять в ДБ вылавливая по exception
-        :return:
         """
         try:
             issue = self.issue()
@@ -115,7 +114,6 @@ class AtlassianMonitor(AtlassianConfig):
         Если в ДБ нет id статьи и в конфе нет статьи с тестированием задачи - создаем её.
         Если нет только айди - записываем его в ДБ,
         Если id есть - возвращаемся.
-        :return:
         """
         issue = self.issue()
         if not issue.confluence_id and not self.confluence_page_id():
