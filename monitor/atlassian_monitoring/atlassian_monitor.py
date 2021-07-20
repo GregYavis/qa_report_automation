@@ -54,7 +54,6 @@ class AtlassianMonitor(AtlassianConfig):
         Достаем таску из ДБ, если ее там нету, то она ранее не обрабатывалась
         Задач по webhookEvent = issue_updated будет много на старте,
         поэтому их тоже надо добавлять в ДБ вылавливая по exception
-        :return:
         """
         try:
             issue = self.issue()

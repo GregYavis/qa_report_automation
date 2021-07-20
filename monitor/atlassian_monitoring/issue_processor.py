@@ -35,12 +35,11 @@ class ReleaseProcessor(AtlassianConfig):
         return info
 
     def _release_states(self):
-
         return [e.value for e in self.issue_states if e not in [self.issue_states.READY_FOR_QA]]
 
     def release_ready_for_report(self, release_name: str):
         issues_in_release = Issue.objects.filter(release_name=release_name)
-        ready_issues = Issue.objects.filter(release_name=release_name, issue_status=self.issue_states.RELEASED)
+        ready_issues = Issue.objects.filter(release_name=release_name, issue_status=self.issue_states.RELEASED.value)
         return list(issues_in_release) == list(ready_issues)
 
 
@@ -51,7 +50,6 @@ class ReleaseProcessor(AtlassianConfig):
         Пример нового шаблона https://confluence.4slovo.ru/pages/viewpage.action?pageId=95485966
         release_parent_id = id созданной страницы релиза
         Все задачи относящиеся к данному релизу, переносим в папку релиза - меняется partner_id
-        :return:
         """
         release_name = self.request.POST.get('release_name')
         country = self.request.POST.get('release_name').split('.')[0]

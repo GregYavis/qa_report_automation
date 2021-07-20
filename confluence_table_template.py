@@ -80,26 +80,26 @@ def release_report_template(country):
                f'<a href="{checklist_link}">Чеклист тестирования релиза {country}</a>' \
                '</p>' \
                '<table border="1" class="confluenceTable">' \
-               '<colgroup><col><col><col></colgroup>' \
+               '<colgroup><col></col><col></col><col></col></colgroup>' \
                '<tbody>' \
                '<tr>' \
-               '<th class="confluenceTh"><br></th><th class="confluenceTh">RC Исполнитель, дата</th>' \
+               '<th class="confluenceTh"><br></br></th><th class="confluenceTh">RC Исполнитель, дата</th>' \
                '<th colspan="1" class="confluenceTh">Staging <span>Исполнитель, дата</span></th>' \
                '</tr>' \
                '<tr>' \
                '<td class="confluenceTd"><h2>Регресс десктопной версии</h2></td><td class="confluenceTd">' \
-               '<div class="content-wrapper"></div></td><td colspan="1" class="confluenceTd"><br>' \
+               '<div class="content-wrapper"></div></td><td colspan="1" class="confluenceTd"><br></br>' \
                '</td>' \
                '</tr>' \
                '<tr>' \
                '<td class="confluenceTd"><h2><span>Регресс мобильной версии</span></h2></td>' \
-               '<td class="confluenceTd"><br></td><td colspan="1" class="confluenceTd"><br>' \
+               '<td class="confluenceTd"><br></br></td><td colspan="1" class="confluenceTd"><br></br>' \
                '</td>' \
                '</tr>' \
                '<tr>' \
                '<td class="confluenceTd"><h2>Исследовательское тестирование</h2></td>' \
-               '<td class="confluenceTd"><br></td><td colspan="1" class="confluenceTd">' \
-               '<br>' \
+               '<td class="confluenceTd"><br></br></td><td colspan="1" class="confluenceTd">' \
+               '<br></br>' \
                '</td>' \
                '</tr>' \
                '</tbody>' \
