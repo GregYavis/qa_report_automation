@@ -12,7 +12,7 @@
     {% if messages %}
         {% for message in messages %}
 
-  <button class="text-center alert alert-{{message.tags}} alert-dismissible fade show" role="alert"type="button" data-bs-dismiss="alert" aria-label="Close" style="width: 100%; margin: auto;">{{message}}</button>
+  <button class="text-center alert alert-{{message.tags}} alert-dismissible fade show" role="alert" type="button" data-bs-dismiss="alert" aria-label="Close" style="width: 100%; margin: auto;">{{message}}</button>
 
         {% endfor %}
     {% endif %}
@@ -26,9 +26,7 @@
     <button type="submit" class="btn btn-outline-primary btn-sm">Нет задач к релизу</button>
 
     {% endif %}
-    {% comment %}<button type="submit" class="btn btn-outline-primary btn-sm" name="monitor" value="confluence">Confluence monitor</button>
 
-    {% endcomment %}
         {% for release_name, issues in releases.items %}
         <p style="margin-top: 20px; margin-bottom: 20px">
         <form action="{% url 'monitor:main-page' %}" method="POST">
