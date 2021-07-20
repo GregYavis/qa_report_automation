@@ -17,7 +17,7 @@ class ReleaseProcessor(AtlassianConfig):
 
     def __init__(self, request):
         super(ReleaseProcessor, self).__init__()
-        self.year_of_release_title = 'Выпущенные релизы {}'
+        self.year_releases = 'Выпущенные релизы {}'
         self.release_report_title = 'Релиз {} Отчет о тестировании'
 
         self.request = request
@@ -35,13 +35,12 @@ class ReleaseProcessor(AtlassianConfig):
         return info
 
     def _release_states(self):
-        return [e.value for e in self.issue_states if e not in
-                [self.issue_states.RELEASED, self.issue_states.READY_FOR_QA]]
 
-    @staticmethod
-    def release_ready_for_report(release_name: str):
+        return [e.value for e in self.issue_states if e not in [self.issue_states.READY_FOR_QA]]
+
+    def release_ready_for_report(self, release_name: str):
         issues_in_release = Issue.objects.filter(release_name=release_name)
-        ready_issues = Issue.objects.filter(release_name=release_name, issue_status='In regression test')
+        ready_issues = Issue.objects.filter(release_name=release_name, issue_status=self.issue_states.RELEASED)
         return list(issues_in_release) == list(ready_issues)
 
 
@@ -56,8 +55,7 @@ class ReleaseProcessor(AtlassianConfig):
         """
         release_name = self.request.POST.get('release_name')
         country = self.request.POST.get('release_name').split('.')[0]
-        year_id = self.confluence.get_page_by_title(space='AT',
-                                                    title=f'Выпущенные релизы {datetime.now().year}')['id']
+        year_id = self.confluence_page(title=self.year_releases.format(datetime.now().year))['id']
         release_title = self.release_report_title.format(release_name)
         # Создаем шаблон релиза
         self.confluence.create_page(space='AT',
@@ -67,7 +65,7 @@ class ReleaseProcessor(AtlassianConfig):
         # Далее получаем таски релиза release_name
         release_issues = Issue.objects.filter(release_name=release_name)
 
-        release_report_id = self.confluence.get_page_by_title(space='AT', title=release_title)['id']
+        release_report_id = self.confluence_page(title=release_title)['id']
         for issue in release_issues:
             self.confluence.update_page(page_id=issue.confluence_id,
                                         title=self.confluence_title.format(issue.issue_key),
@@ -93,10 +91,11 @@ class ReleaseProcessor(AtlassianConfig):
         except IndexError:
             return None
 
+    def confluence_page(self, title):
+        return self.confluence.get_page_by_title(space='AT', title=title)
+
     def create_link(self, issue):
-        new_article_confluence_id = self.confluence.get_page_by_title(space="AT",
-                                                                      title=self.confluence_title.format(
-                                                                          issue.issue_key))['id']
+        new_article_confluence_id = self.confluence_page(title=self.confluence_title.format(issue.issue_key))['id']
         self.jira.create_or_update_issue_remote_links(issue_key=issue.issue_key,
                                                       link_url=''.join(
                                                           [self.confluence_viewpage, str(new_article_confluence_id)]),
@@ -109,6 +108,8 @@ class ReleaseProcessor(AtlassianConfig):
             issue_key = issue['key']
             links = self.jira.get_issue_remote_links(issue['id'])
             confluence_id = self.issue_confluence_id(links)
+            if confluence_id is None:
+                confluence_id = self.confluence_page(self.confluence_title.format(issue_key))['id']
             logger.info(f'Запись в БД {issue_key}.')
             Issue.objects.create(issue_key=issue_key,
                                  issue_summary=self.get_issue_summary(issue_key),
@@ -118,10 +119,11 @@ class ReleaseProcessor(AtlassianConfig):
                                  confluence_id=confluence_id)
 
             issue = Issue.objects.get(issue_key=issue_key)
-            if not self.confluence.get_page_by_title(space='AT', title=self.confluence_title.format(issue_key)):
+
+            if not self.confluence_page(title=self.confluence_title.format(issue_key)):
                 logger.info(f'Создание шаблона отчета для задачи {issue_key}.')
                 self.confluence.create_page(space='AT',
-                                            title=self.confluence_title,
+                                            title=self.confluence_title.format(issue_key),
                                             body=issue_report_template(issue_key),
                                             parent_id=self.qa_reports_page_id)
                 # Создать линку на созданную статью к задаче в jira
