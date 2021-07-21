@@ -56,10 +56,11 @@ class ReleaseProcessor(AtlassianConfig):
         year_id = self.confluence_page(title=self.year_releases.format(datetime.now().year))['id']
         release_title = self.release_report_title.format(release_name)
         # Создаем шаблон релиза
-        self.confluence.create_page(space='AT',
-                                    title=release_title,
-                                    body=release_report_template(country=country),
-                                    parent_id=year_id)
+        if not self.confluence_page(title=release_title):
+            self.confluence.create_page(space='AT',
+                                        title=release_title,
+                                        body=release_report_template(country=country),
+                                        parent_id=year_id)
         # Далее получаем таски релиза release_name
         release_issues = Issue.objects.filter(release_name=release_name)
 
@@ -68,6 +69,8 @@ class ReleaseProcessor(AtlassianConfig):
             self.confluence.update_page(page_id=issue.confluence_id,
                                         title=self.confluence_title.format(issue.issue_key),
                                         parent_id=release_report_id)
+            issue.release_report = True
+            issue.save()
 
 
     def get_release_name(self, issue_key):
