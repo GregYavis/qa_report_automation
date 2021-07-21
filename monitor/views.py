@@ -33,7 +33,7 @@ class MainPage(View):
         if self.request.POST.get('release_name'):
             # Проверяем что все таски из релиза в статусе ready for release
             if release_processor.release_ready_for_report(self.request.POST.get('release_name')):
-                # Перекладывваем таски относящиеся к релизу в иерапхию ГОД > РЕЛИЗ > ЗАДАЧИ
+                # Перекладываем таски относящиеся к релизу в иерархию ГОД > РЕЛИЗ > ЗАДАЧИ
                 release_processor.create_release_report()
             else:
                 messages.warning(self.request, 'Не все задачи из релиза прошли тестирование')
