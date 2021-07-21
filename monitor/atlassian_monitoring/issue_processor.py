@@ -103,7 +103,14 @@ class ReleaseProcessor(AtlassianConfig):
     def jira_monitoring(self):
         data = self.jira.jql(self.QA_QUERY)
         for issue in data["issues"]:
+
             issue_key = issue['key']
+            try:
+                # Для сборок не создаем таких же отчетов как для тасок
+                if self.jira.issue_field_value(key=issue_key, field='issuetype')['name'] == 'RC':
+                    continue
+            except TypeError:
+                pass
             links = self.jira.get_issue_remote_links(issue['id'])
             confluence_id = self.issue_confluence_id(links)
             if confluence_id is None:
