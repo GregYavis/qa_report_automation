@@ -14,6 +14,13 @@ class IssueStates(Enum):
     IN_REGRESSION_TEST = 'In regression test'
     READY_FOR_RELEASE = 'Ready for release'
     RELEASED = 'Released to production'
+    CLOSED = 'Closed'
+    CLOSED_RU = 'Закрыт'
+    FIXED = 'Fixed'
+    FIXED_RU = 'Готово'
+    IN_QA = 'In QA'
+    OPEN = 'Open'
+    REOPEN = 'Reopen'
 
 class AtlassianConfig:
     JIRA_ISSUE_UPDATED = 'jira:issue_updated'
