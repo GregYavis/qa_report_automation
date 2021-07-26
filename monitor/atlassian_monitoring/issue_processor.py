@@ -39,7 +39,7 @@ class ReleaseProcessor(AtlassianConfig):
 
     def release_ready_for_report(self, release_name: str):
         issues_in_release = Issue.objects.filter(release_name=release_name)
-        ready_issues = Issue.objects.filter(release_name=release_name, issue_status=self.issue_states.RELEASED.value)
+        ready_issues = Issue.objects.filter(release_name=release_name, issue_status__in=self._release_states())
         return list(issues_in_release) == list(ready_issues)
 
 
