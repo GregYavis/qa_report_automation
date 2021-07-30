@@ -6,7 +6,8 @@ from django.views.generic import View
 
 from monitor.atlassian_monitoring.atlassian_monitor import AtlassianMonitor
 
-from monitor.atlassian_monitoring.issue_processor import ReleaseProcessor
+from monitor.atlassian_monitoring.release_processor import ReleaseProcessor
+from monitor.atlassian_monitoring.jira_monitor import Monitor
 from monitor.models import Issue
 
 logger = logging.getLogger('django')
@@ -18,19 +19,22 @@ class MainPage(View):
 
     def get(self, *args, **kwargs):
         release_processor = ReleaseProcessor(self.request)
+
         current_releases = release_processor.get_feature_releases_info()
         issues_exists = Issue.objects.all().exists()
         context = {'releases': current_releases, 'has_issue': issues_exists}
         return render(self.request, 'main_page.html', context)
 
     def request_handler(self):
-        release_processor = ReleaseProcessor(self.request)
+
         if self.request.POST.get('monitor'):
+            release_processor = Monitor()
             # Обрабатываем текущие таски в статусах 'Ready for QA' 'Passed QA' 'In regression test' 'Ready for release'
             release_processor.jira_monitoring()
             return
 
         if self.request.POST.get('release_name'):
+            release_processor = ReleaseProcessor(self.request)
             # Проверяем что все таски из релиза в статусе ready for release
             if release_processor.release_ready_for_report(self.request.POST.get('release_name')):
                 # Перекладываем таски относящиеся к релизу в иерархию ГОД > РЕЛИЗ > ЗАДАЧИ
