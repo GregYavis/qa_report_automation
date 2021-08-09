@@ -41,7 +41,9 @@ class ReleaseProcessor(AtlassianConfig):
                                                                 self.issue_states.CLOSED_RU,
                                                                 self.issue_states.FIXED,
                                                                 self.issue_states.FIXED_RU,
-                                                                self.issue_states.READY_FOR_QA]]
+                                                                self.issue_states.READY_FOR_QA,
+                                                                self.issue_states.OPEN,
+                                                                self.issue_states.REOPEN]]
 
     def release_ready_for_report(self, release_name: str):
         issues_in_release = Issue.objects.filter(release_name=release_name)
