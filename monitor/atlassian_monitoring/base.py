@@ -19,8 +19,14 @@ class IssueStates(Enum):
     FIXED_RU = 'Готово'
     IN_QA = 'In QA'
     OPEN = 'Open'
-    REOPEN = 'Reopen'
-
+    REOPEN = 'Reopened'
+    IN_DEVELOPMENT = 'In development'
+    BLOCKED = 'Blocked / on hold'
+    READY_FOR_REVIEW = 'Ready for review'
+    READY_FOR_TECHNICAL_SOLUTION_REVIEW = 'Ready for technical solution review'
+    READY_FOR_DEVELOPMENT = 'Ready for development'
+    TECHNICAL_SOLUTION = 'Technical solution'
+    IN_PROGRESS = 'In Progress'
 
 class AtlassianConfig:
     JIRA_ISSUE_UPDATED = 'jira:issue_updated'
