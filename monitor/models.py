@@ -5,7 +5,6 @@ from django.shortcuts import reverse
 # Create your models here.
 
 class Issue(models.Model):
-
     issue_key = models.CharField(max_length=56, unique=True)
     jira_url = models.CharField(max_length=512)
     confluence_id = models.IntegerField(blank=True, null=True)
@@ -14,3 +13,6 @@ class Issue(models.Model):
     issue_status = models.CharField(max_length=30)
     release_name = models.CharField(max_length=56, blank=True, null=True)
     release_report = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.issue_key
