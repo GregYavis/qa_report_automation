@@ -58,10 +58,11 @@ class AtlassianMonitor(AtlassianConfig):
         try:
             issue = self.issue()
             logger.info('Check issue for updates')
-
+            if self.release_name != issue.release_name:
+                issue.release_report = False
+                issue.save()
             if self.issue_summary != issue.issue_summary or \
                     self.issue_status != issue.issue_status or \
-                    self.release_name != issue.release_name or \
                     self.confluence_page_id():
                 self.update_issue(self.issue_summary, self.issue_status, self.release_name, self.confluence_page_id())
 
@@ -135,3 +136,4 @@ class AtlassianMonitor(AtlassianConfig):
         self.jira.create_or_update_issue_remote_links(issue_key=self.issue_key,
                                                       link_url=self.confluence_link(issue.confluence_id),
                                                       title=self.confluence_title.format(self.issue_key))
+
