@@ -60,6 +60,7 @@ class AtlassianMonitor(AtlassianConfig):
             logger.info('Check issue for updates')
             if self.release_name != issue.release_name:
                 issue.release_report = False
+                issue.release_name = self.release_name
                 issue.save()
             if self.issue_summary != issue.issue_summary or \
                     self.issue_status != issue.issue_status or \
