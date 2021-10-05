@@ -10,7 +10,7 @@ class Issue(models.Model):
     confluence_id = models.IntegerField(blank=True, null=True)
     issue_summary = models.CharField(max_length=1024)
     create_ts = models.DateTimeField(auto_now_add=True)
-    issue_status = models.CharField(max_length=30)
+    issue_status = models.CharField(max_length=90)
     release_name = models.CharField(max_length=56, blank=True, null=True)
     release_report = models.BooleanField(default=False)
 
