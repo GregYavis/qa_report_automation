@@ -44,14 +44,18 @@ class AtlassianMonitor(AtlassianConfig):
             issue = self.issue()
             logger.info(f'Проверка задачи {issue.issue_key} на обновление статуса/наименования/релиза')
             report_page = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
-            if self.jira_release_name != issue.jira_release_name:
+            if self.jira_release_name != issue.release_name:
                 issue.release_report = False
-                issue.jira_release_name = self.jira_release_name
+                issue.release_name = self.jira_release_name
                 issue.save()
-            if self.jira_issue_summary != issue.jira_issue_summary or \
-                    self.jira_issue_status != issue.jira_issue_status or \
+            if self.jira_issue_summary != issue.issue_summary or \
+                    self.jira_issue_status != issue.issue_status or \
                     report_page != issue.confluence_id:
-                self.update_issue(self.issue_key, self.jira_issue_summary, self.jira_issue_status, self.jira_release_name, report_page)
+                self.update_issue(self.issue_key,
+                                  self.jira_issue_summary,
+                                  self.jira_issue_status,
+                                  self.jira_release_name,
+                                  report_page)
 
         except models.Issue.DoesNotExist:
             logger.info('Создание записи для обновленной задачи еще не представленной в БД')
