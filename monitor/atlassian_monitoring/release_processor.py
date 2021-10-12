@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from nested_lookup import nested_lookup
+
 from monitor.atlassian_monitoring.base import AtlassianConfig
 from monitor.models import Issue
 from confluence_table_template import release_report_template, issue_report_template
@@ -29,7 +29,9 @@ class ReleaseProcessor(AtlassianConfig):
         feature_releases = set(issue.release_name for issue in issues_to_release if
                                issue.issue_status in self.in_qa_states())
         info = {release_name: {
-            issue.issue_key: {'status': issue.issue_status, 'summary': issue.issue_summary, 'url': issue.jira_url}
+            issue.issue_key: {'status': issue.issue_status,
+                              'summary': issue.issue_summary,
+                              'url': issue.jira_url}
             for issue in Issue.objects.filter(release_name=release_name)}
                 for release_name in feature_releases}
         return info
@@ -58,6 +60,30 @@ class ReleaseProcessor(AtlassianConfig):
         ready_issues = Issue.objects.filter(release_name=release_name, issue_status__in=self.in_qa_states())
         return list(issues_in_release) == list(ready_issues)
 
+    def monitor_issues_manual(self, release_name):
+        """
+        При нажатии кнопки проверяем атрибуты задач на актуальность, на тот случай
+        Если на момент обновления одного из атрибутов сервис был не доступен для вебхука,
+        и при условии отличия актуальных и ранее сохраненных атрибутов обновляем их
+        """
+        issues = Issue.objects.filter(release_name=release_name)
+        logger.info('Проверка актуальности атрибутов задач перед созданием отчета')
+        for issue in issues:
+            jira_issue_summary = self.issue_summary(issue.issue_key)
+            jira_release_name = self.release_name(issue.issue_key)
+            jira_issue_status = self.issue_status(issue.issue_key)
+            confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
+            if jira_issue_summary != issue.issue_summary or \
+                    jira_release_name != issue.release_name or \
+                    jira_issue_status != issue.issue_status or \
+                    confluence_id != issue.confluence_id:
+                self.update_issue(issue_key=issue.issue_key,
+                                  issue_summary=jira_issue_summary,
+                                  issue_status=jira_issue_status,
+                                  release_name=jira_release_name,
+                                  confluence_id=confluence_id)
+        return
+
 
     def create_release_report(self):
         """
@@ -68,19 +94,24 @@ class ReleaseProcessor(AtlassianConfig):
         Все задачи относящиеся к данному релизу, переносим в папку релиза - меняется partner_id
         """
         release_name = self.request.POST.get('release_name')
-        country = self.request.POST.get('release_name').split('.')[0]
-        year_id = self.confluence_page(title=self.year_releases.format(datetime.now().year))['id']
+        logger.info(f'{release_name}')
+        country = release_name.split('.')[0]
+        year_id = self.get_confluence_page_id(title=self.year_releases.format(datetime.now().year))
         release_title = self.release_report_title.format(release_name)
+
         # Создаем шаблон релиза
         if not self.confluence.page_exists(space='AT', title=release_title):
+            logger.info(f'Создание шаблона отчета для релиза {release_name}')
             self.confluence.create_page(space='AT',
                                         title=release_title,
                                         body=release_report_template(country=country),
                                         parent_id=year_id)
+
         # Далее получаем таски релиза release_name
         release_issues = Issue.objects.filter(release_name=release_name)
-        release_report_id = self.confluence_page(title=release_title)['id']
+        release_report_id = self.get_confluence_page_id(title=release_title)
         for issue in release_issues:
+            logger.info(f'Перенос отчета задачи {issue} в родительскую папку {release_title} с id {release_report_id}')
             self.confluence.update_page(page_id=issue.confluence_id,
                                         title=self.confluence_title.format(issue.issue_key),
                                         parent_id=release_report_id)

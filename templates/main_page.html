@@ -11,7 +11,9 @@
     <div class="container text-center" style="margin-top: 10px">
     {% if not releases and not has_issue%}
     <form action="{% url 'monitor:main-page' %}" method="POST">
-    <button type="submit" class="btn btn-outline-primary btn-sm" name="monitor" value="jira">Мониторинг ближайших к релизу задач</button>
+        <button type="submit" class="btn btn-outline-primary btn-sm" name="monitor" value="jira">
+            Мониторинг ближайших к релизу задач
+        </button>
     </form>
     {% elif not releases and has_issue %}
     <button type="submit" class="btn btn-outline-primary btn-sm">Нет задач к релизу</button>
@@ -22,8 +24,11 @@
         <p style="margin-top: 20px; margin-bottom: 20px">
         <form action="{% url 'monitor:main-page' %}" method="POST">
             <a>{{ release_name }}</a>
-            <button type="submit" class="btn btn-outline-primary btn-sm" name="release_name" value="{{ release_name }}">Generate release report</button>
+            <button type="submit" class="btn btn-outline-primary btn-sm" name="release_name" value="{{ release_name }}">
+                Generate release report
+            </button>
         </form>
+
         </p>
 
         <table class="table table-bordered border-primary" style="margin: auto;">
@@ -38,10 +43,8 @@
                 <tbody>
                 <tr>
                     <td style="width: 16.66%"><a href="{{ data.url }}">{{ issue }}</a></td>
-
                     <td style="width: 70%">{{ data.summary }}</td>
                     <td style="width: 16.66%">{{ data.status }}</td>
-
                 </tr>
                 </tbody>
             {% endfor %}
