@@ -7,7 +7,7 @@ from django.views.generic import View
 from monitor.atlassian_monitoring.atlassian_monitor import AtlassianMonitor
 
 from monitor.atlassian_monitoring.release_processor import ReleaseProcessor
-from monitor.atlassian_monitoring.jira_monitor import Monitor
+
 from monitor.models import Issue
 
 logger = logging.getLogger('django')
@@ -29,9 +29,9 @@ class MainPage(View):
     def request_handler(self):
 
         if self.request.POST.get('monitor'):
-            release_processor = Monitor()
+            release_processor = ReleaseProcessor(self.request)
             # Обрабатываем текущие таски в статусах 'Ready for QA' 'Passed QA' 'In regression test' 'Ready for release'
-            release_processor.jira_monitoring()
+            release_processor.first_launch_get_issues()
             return
 
         if self.request.POST.get('release_name'):
