@@ -103,7 +103,7 @@ class AtlassianConfig:
     def report_exists(self, issue_key):
         return self.confluence.page_exists(space="AT", title=self.confluence_title.format(issue_key))
 
-    def save_issue(self, issue_key, issue_summary, release_name, issue_status,):
+    def save_issue(self, issue_key, issue_summary, release_name, issue_status):
         Issue.objects.create(issue_key=issue_key,
                              jira_url=''.join([self.JIRA_BASE_URL, "browse/", issue_key]),
                              issue_summary=issue_summary,
