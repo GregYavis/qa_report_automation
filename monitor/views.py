@@ -59,6 +59,7 @@ class MainPage(View):
                     return
 
             elif monitor.jira_issue_event == monitor.JIRA_ISSUE_CREATED:
+                logger.info(monitor.issue_key)
                 logger.info(monitor.jira_issue_event)
                 logger.info(Issue.objects.filter(issue_key=monitor.issue_key).exists())
                 monitor.save_issue(issue_key=monitor.issue_key,
