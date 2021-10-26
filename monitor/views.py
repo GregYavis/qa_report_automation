@@ -60,13 +60,12 @@ class MainPage(View):
 
             elif monitor.jira_issue_event == monitor.JIRA_ISSUE_CREATED:
                 logger.info(monitor.issue_key)
-                logger.info(monitor.jira_issue_event)
-                logger.info(Issue.objects.filter(issue_key=monitor.issue_key).exists())
-                monitor.save_issue(issue_key=monitor.issue_key,
-                                   issue_summary=monitor.jira_issue_summary,
-                                   release_name=monitor.jira_release_name,
-                                   issue_status=monitor.jira_issue_status)
-                logger.info('Create database entry for created issue')
+                if not Issue.objects.filter(issue_key=monitor.issue_key).exists():
+                    monitor.save_issue(issue_key=monitor.issue_key,
+                                       issue_summary=monitor.jira_issue_summary,
+                                       release_name=monitor.jira_release_name,
+                                       issue_status=monitor.jira_issue_status)
+                    logger.info('Create database entry for created issue')
                 return
 
     def post(self, *args, **kwargs):
