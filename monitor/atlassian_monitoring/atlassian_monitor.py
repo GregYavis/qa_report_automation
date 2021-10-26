@@ -19,12 +19,12 @@ class AtlassianMonitor(AtlassianConfig):
         self.request = json.loads(request.body.decode('utf-8'))
 
         self.issue_key = self.get_issue_key()
-        self.issue_url = ''.join(['https://jira.4slovo.ru/browse/', self.issue_key])
+        self.issue_url = ''.join([self.JIRA_BASE_URL, "browse/", self.issue_key])
 
-        self.issue_status = self.get_issue_status()
-        self.release_name = self.get_release_name()
-        self.issue_summary = self.get_issue_summary()
-        self.issue_event = self.request['webhookEvent']
+        self.jira_issue_status = self.get_issue_status()
+        self.jira_release_name = self.get_release_name()
+        self.jira_issue_summary = self.get_issue_summary()
+        self.jira_issue_event = self.request['webhookEvent']
 
     def issue(self):
         return Issue.objects.get(issue_key=self.issue_key)
@@ -33,21 +33,6 @@ class AtlassianMonitor(AtlassianConfig):
         issue_key = self.request['issue']['key']
         return issue_key
 
-    def confluence_link(self, confluence_id):
-        return ''.join([self.confluence_viewpage, str(confluence_id)])
-
-    def get_issue_data(self):
-        return self.issue_summary, self.release_name, self.issue_status
-
-    def save_issue(self):
-        try:
-            Issue.objects.create(issue_key=self.issue_key,
-                                 jira_url=self.issue_url,
-                                 issue_summary=self.issue_summary,
-                                 issue_status=self.issue_status,
-                                 confluence_id=self.confluence_page_id())
-        except IntegrityError:
-            logger.info(f'Задача {self.issue_key} уже занесена в БД')
 
     def check_and_update_issue(self):
         """
@@ -57,39 +42,36 @@ class AtlassianMonitor(AtlassianConfig):
         """
         try:
             issue = self.issue()
-            logger.info('Check issue for updates')
-            if self.release_name != issue.release_name:
+            logger.info(f'Проверка задачи {issue.issue_key} на обновление статуса/наименования/релиза')
+            confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
+            if self.jira_release_name != issue.release_name:
                 issue.release_report = False
-                issue.release_name = self.release_name
+                issue.release_name = self.jira_release_name
                 issue.save()
-            if self.issue_summary != issue.issue_summary or \
-                    self.issue_status != issue.issue_status or \
-                    self.confluence_page_id():
-                self.update_issue(self.issue_summary, self.issue_status, self.release_name, self.confluence_page_id())
+            if self.jira_issue_summary != issue.issue_summary or \
+                    self.jira_issue_status != issue.issue_status or \
+                    confluence_id != issue.confluence_id:
+                self.update_issue(self.issue_key,
+                                  self.jira_issue_summary,
+                                  self.jira_issue_status,
+                                  self.jira_release_name,
+                                  confluence_id)
 
         except models.Issue.DoesNotExist:
-            logger.info('Create database entry for updated issue that not writen in DB')
-            self.save_issue()
+            logger.info('Создание записи для обновленной задачи еще не представленной в БД')
+            try:
+                logger.info(f'Создана задача {self.issue_key}. Запись в БД')
+                self.save_issue(issue_key=self.issue_key,
+                                issue_summary=self.jira_issue_summary,
+                                release_name=self.jira_release_name,
+                                issue_status=self.jira_issue_status)
+            except IntegrityError:
+                logger.info(f'Задача {self.issue_key} уже занесена в БД')
 
-    def update_issue(self, issue_summary, issue_status, release_name, confluence_id):
-        issue = self.issue()
-        issue.issue_summary = issue_summary
-        issue.issue_status = issue_status
-        issue.release_name = release_name
-        issue.confluence_id = confluence_id
-        issue.save()
-
-    def confluence_page_id(self):
-        if self.confluence.page_exists(space="AT", title=self.confluence_title.format(self.issue_key)):
-            return self.confluence.get_page_by_title(space="AT",
-                                                     title=self.confluence_title.format(self.issue_key))['id']
-        else:
-            return None
 
     def set_issue_confluence_id(self):
-        logger.info(f'Добавлен confluence_id отчета задачи {self.issue_key}')
         issue = self.issue()
-        issue.confluence_id = self.confluence_page_id()
+        issue.confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
         issue.save()
 
     def get_issue_summary(self):
@@ -118,14 +100,16 @@ class AtlassianMonitor(AtlassianConfig):
         Если id есть - возвращаемся.
         """
         issue = self.issue()
-        if not issue.confluence_id and not self.confluence_page_id():
-            self._create_article()
-        elif not issue.confluence_id and self.confluence_page_id():
+        if not issue.confluence_id and not self.report_exists(self.issue_key):
+            self._create_article_linked_with_task()
+        elif not issue.confluence_id and self.report_exists(self.issue_key):
+            logger.info(f'Задача уже имеет отчет о тестировании. Добавлен confluence_id отчета задачи {self.issue_key}')
             self.set_issue_confluence_id()
         elif issue.confluence_id:
+            logger.info(f'Задача уже имеет отчет о тестировании и прикрепленную на него ссылку')
             return
 
-    def _create_article(self):
+    def _create_article_linked_with_task(self):
         logger.info(f'Создана статья с шаблоном для отчета по тестированию задачи {self.issue_key}')
         self.confluence.create_page(space='AT',
                                     title=self.confluence_title.format(self.issue_key),
@@ -133,8 +117,5 @@ class AtlassianMonitor(AtlassianConfig):
                                     parent_id=self.qa_reports_page_id)
         self.set_issue_confluence_id()
         # Создать линку на созданную статью к задаче в jira
-        issue = self.issue()
-        self.jira.create_or_update_issue_remote_links(issue_key=self.issue_key,
-                                                      link_url=self.confluence_link(issue.confluence_id),
-                                                      title=self.confluence_title.format(self.issue_key))
-
+        logger.info(f'Прикрепляем на отчет о тестировании к задаче {self.issue_key}.')
+        self.create_link(issue=self.issue())

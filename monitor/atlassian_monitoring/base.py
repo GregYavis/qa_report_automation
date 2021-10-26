@@ -1,10 +1,13 @@
 import json
-import json
+import logging
 import os
 from enum import Enum
 from monitor.models import Issue
 from atlassian import Confluence
 from atlassian import Jira
+from nested_lookup import nested_lookup
+
+logger = logging.getLogger('django')
 
 
 class IssueStates(Enum):
@@ -28,12 +31,13 @@ class IssueStates(Enum):
     TECHNICAL_SOLUTION = 'Technical solution'
     IN_PROGRESS = 'In Progress'
 
+
 class AtlassianConfig:
     JIRA_ISSUE_UPDATED = 'jira:issue_updated'
     JIRA_ISSUE_CREATED = 'jira:issue_created'
     ROOT_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
     CONFIG_PATH = os.path.join(ROOT_PATH, 'config.json')
-
+    JIRA_BASE_URL = json.load(open(CONFIG_PATH))['JIRA_URL']
     QA_QUERY = 'project = 4Slovo AND status = "Ready for QA" or status = "Passed QA" or status ' \
                '= "In regression test" or status = "Ready for release" ORDER BY priority DESC'
 
@@ -50,38 +54,60 @@ class AtlassianConfig:
         self.confluence = Confluence(url=self.config["CONFLUENCE_URL"],
                                      username=self.config["USERNAME"],
                                      password=self.config["PASSWORD"])
-
         self.issue_states = IssueStates
 
-    def issue_confluence_id(self, links):
-        try:
-            return self.confluence_mentions_in_links(links)[0]['object']['url'].split('=')[1]
-        except IndexError:
-            return None
-
-    @staticmethod
-    def confluence_mentions_in_links(links):
-        return [link for link in links if 'name' in link['application'] and 'confluence' in link['object']['url']]
-
     def release_name(self, issue_key):
-        release_name = self.jira.issue_field_value(issue_key, 'fixVersions')
+        release_name = self.jira.issue_field_value(key=issue_key,  field='fixVersions')
         if release_name:
             return release_name[0]['name']
         else:
             return None
 
     def issue_status(self, issue_key):
-        return self.jira.issue_field_value(issue_key, 'status')['name']
+        return self.jira.issue_field_value(key=issue_key,  field='status')['name']
 
     def issue_summary(self, issue_key):
         return self.jira.issue_field_value(key=issue_key, field='summary')
 
-    def confluence_page(self, title):
-        return self.confluence.get_page_by_title(space='AT', title=title)
+    def get_confluence_page_id(self, title):
+        if self.confluence.page_exists(space="AT", title=title):
+            return self.confluence.get_page_by_title(space="AT", title=title)['id']
+        else:
+            return None
 
     def create_link(self, issue):
-        new_article_confluence_id = self.confluence_page(title=self.confluence_title.format(issue.issue_key))['id']
+        new_article_confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
         self.jira.create_or_update_issue_remote_links(issue_key=issue.issue_key,
                                                       link_url=''.join(
                                                           [self.confluence_viewpage, str(new_article_confluence_id)]),
                                                       title=self.confluence_title.format(issue.issue_key))
+
+    def check_report_link_in_remote_links(self, issue):
+        # Проверяем ссылки на отчет о тестировании
+        links = self.jira.get_issue_remote_links(issue_key=issue.issue_key)
+        urls = [nested_lookup(key='url', document=link)[0] for link in links]
+        if ''.join([self.confluence_viewpage, str(issue.confluence_id)]) in urls:
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def update_issue(issue_key, issue_summary, issue_status, release_name, confluence_id):
+        issue = Issue.objects.get(issue_key=issue_key)
+        issue.issue_summary = issue_summary
+        issue.issue_status = issue_status
+        issue.release_name = release_name
+        issue.confluence_id = confluence_id
+        issue.save()
+
+    def report_exists(self, issue_key):
+        return self.confluence.page_exists(space="AT", title=self.confluence_title.format(issue_key))
+
+    def save_issue(self, issue_key, issue_summary, release_name, issue_status):
+        Issue.objects.create(issue_key=issue_key,
+                             jira_url=''.join([self.JIRA_BASE_URL, "browse/", issue_key]),
+                             issue_summary=issue_summary,
+                             issue_status=issue_status,
+                             release_name=release_name,
+                             confluence_id=self.get_confluence_page_id(
+                                 title=self.confluence_title.format(issue_key)))

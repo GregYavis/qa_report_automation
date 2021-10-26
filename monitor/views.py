@@ -7,15 +7,16 @@ from django.views.generic import View
 from monitor.atlassian_monitoring.atlassian_monitor import AtlassianMonitor
 
 from monitor.atlassian_monitoring.release_processor import ReleaseProcessor
-from monitor.atlassian_monitoring.jira_monitor import Monitor
+
 from monitor.models import Issue
 
 logger = logging.getLogger('django')
+
+
 # Create your views here.
 
 
 class MainPage(View):
-
 
     def get(self, *args, **kwargs):
         release_processor = ReleaseProcessor(self.request)
@@ -28,19 +29,22 @@ class MainPage(View):
     def request_handler(self):
 
         if self.request.POST.get('monitor'):
-            release_processor = Monitor()
+            release_processor = ReleaseProcessor(self.request)
             # Обрабатываем текущие таски в статусах 'Ready for QA' 'Passed QA' 'In regression test' 'Ready for release'
-            release_processor.jira_monitoring()
+            release_processor.first_launch_get_issues()
             return
 
         if self.request.POST.get('release_name'):
             release_processor = ReleaseProcessor(self.request)
+            release_name = self.request.POST.get('release_name')
+            release_processor.monitor_issues_manual(release_name)
             # Проверяем что все таски из релиза в статусе ready for release
-            if release_processor.release_ready_for_report(self.request.POST.get('release_name')):
+            if release_processor.release_ready_for_report(release_name):
                 # Перекладываем таски относящиеся к релизу в иерархию ГОД > РЕЛИЗ > ЗАДАЧИ
                 release_processor.create_release_report()
             else:
                 messages.warning(self.request, 'Не все задачи из релиза прошли тестирование')
+
 
         else:
             monitor = AtlassianMonitor(request=self.request)
@@ -48,18 +52,22 @@ class MainPage(View):
                 logger.info('Задача пропущена т.к. тип задачи RC')
                 return
 
-            if monitor.issue_event == monitor.JIRA_ISSUE_UPDATED:
+            if monitor.jira_issue_event == monitor.JIRA_ISSUE_UPDATED:
                 monitor.check_and_update_issue()
                 if monitor.issue_ready_for_qa():
                     monitor.create_report()
                     return
 
-            elif monitor.issue_event == monitor.JIRA_ISSUE_CREATED:
-                monitor.save_issue()
-                logger.info('Create database entry for created issue')
+            elif monitor.jira_issue_event == monitor.JIRA_ISSUE_CREATED:
+                logger.info(monitor.issue_key)
+                if not Issue.objects.filter(issue_key=monitor.issue_key).exists():
+                    monitor.save_issue(issue_key=monitor.issue_key,
+                                       issue_summary=monitor.jira_issue_summary,
+                                       release_name=monitor.jira_release_name,
+                                       issue_status=monitor.jira_issue_status)
+                    logger.info('Create database entry for created issue')
                 return
 
     def post(self, *args, **kwargs):
         self.request_handler()
         return redirect('/')
-
