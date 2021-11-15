@@ -111,6 +111,7 @@ class ReleaseProcessor(AtlassianConfig):
         release_issues = Issue.objects.filter(release_name=release_name)
         release_report_id = self.get_confluence_page_id(title=release_title)
         for issue in release_issues:
+            print(self.confluence.page_exists(space='AT', title=self.confluence_title.format(issue.issue_key)))
             if not self.confluence.page_exists(space='AT', title=self.confluence_title.format(issue.issue_key)):
                 self.confluence.create_page(space='AT',
                                             title=self.confluence_title.format(issue.issue_key),
