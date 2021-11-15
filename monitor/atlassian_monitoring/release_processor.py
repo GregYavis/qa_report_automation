@@ -107,6 +107,14 @@ class ReleaseProcessor(AtlassianConfig):
         release_issues = Issue.objects.filter(release_name=release_name)
         release_report_id = self.get_confluence_page_id(title=release_title)
         for issue in release_issues:
+            if not self.confluence.page_exists(space='AT', title=self.confluence_title.format(issue.issue_key)):
+                self.confluence.create_page(space='AT',
+                                            title=self.confluence_title.format(issue.issue_key),
+                                            body=issue_report_template(issue.issue_key),
+                                            parent_id=self.qa_reports_page_id)
+                issue.confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
+                issue.save()
+                self.create_link(issue=issue)
             logger.info(f'Перенос отчета задачи {issue} в родительскую папку {release_title} с id {release_report_id}')
             self.confluence.update_page(page_id=issue.confluence_id,
                                         title=self.confluence_title.format(issue.issue_key),
