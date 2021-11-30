@@ -38,10 +38,8 @@ class ReleaseProcessor(AtlassianConfig):
 
 
     def in_qa_states(self):
-        return [e.value for e in self.issue_states if e not in [self.issue_states.RELEASED,
-                                                                self.issue_states.READY_FOR_QA,
+        return [e.value for e in self.issue_states if e not in [self.issue_states.READY_FOR_QA,
                                                                 self.issue_states.OPEN,
-
                                                                 self.issue_states.REOPEN,
                                                                 self.issue_states.IN_DEVELOPMENT,
                                                                 self.issue_states.BLOCKED,
