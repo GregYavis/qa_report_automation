@@ -27,7 +27,7 @@ class ReleaseProcessor(AtlassianConfig):
                                                  release_report=False,
                                                  release_name__isnull=False)
         feature_releases = set(issue.release_name for issue in issues_to_release if
-                               issue.issue_status in self.in_qa_states())
+                               issue.issue_status in self.qa_states())
         info = {release_name: {
             issue.issue_key: {'status': issue.issue_status,
                               'summary': issue.issue_summary,
@@ -37,11 +37,23 @@ class ReleaseProcessor(AtlassianConfig):
         return info
 
 
-    def in_qa_states(self):
+    def qa_states(self):
         return [e.value for e in self.issue_states if e not in [self.issue_states.RELEASED,
                                                                 self.issue_states.READY_FOR_QA,
                                                                 self.issue_states.OPEN,
+                                                                self.issue_states.REOPEN,
+                                                                self.issue_states.IN_DEVELOPMENT,
+                                                                self.issue_states.BLOCKED,
+                                                                self.issue_states.READY_FOR_REVIEW,
+                                                                self.issue_states.READY_FOR_TECHNICAL_SOLUTION_REVIEW,
+                                                                self.issue_states.READY_FOR_DEVELOPMENT,
+                                                                self.issue_states.TECHNICAL_SOLUTION,
+                                                                self.issue_states.IN_PROGRESS,
+                                                                self.issue_states.IN_QA]]
 
+    def ready_for_report_states(self):
+        return [e.value for e in self.issue_states if e not in [self.issue_states.READY_FOR_QA,
+                                                                self.issue_states.OPEN,
                                                                 self.issue_states.REOPEN,
                                                                 self.issue_states.IN_DEVELOPMENT,
                                                                 self.issue_states.BLOCKED,
@@ -55,7 +67,7 @@ class ReleaseProcessor(AtlassianConfig):
     def release_ready_for_report(self, release_name: str):
         issues_in_release = Issue.objects.filter(release_name=release_name)
         logger.info(list(issues_in_release))
-        ready_issues = Issue.objects.filter(release_name=release_name, issue_status__in=self.in_qa_states())
+        ready_issues = Issue.objects.filter(release_name=release_name, issue_status__in=self.ready_for_report_states())
         logger.info(list(ready_issues))
         return list(issues_in_release) == list(ready_issues)
 
@@ -103,7 +115,11 @@ class ReleaseProcessor(AtlassianConfig):
         release_name = self.request.POST.get('release_name')
         logger.info(f'{release_name}')
         country = release_name.split('.')[0]
+        year_title = self.year_releases.format(datetime.now().year)
+        if not self.confluence.page_exists(space="AT", title=year_title):
+            self.confluence.create_page(space='AT', title=year_title, parent_id=self.qa_reports_page_id)
         year_id = self.get_confluence_page_id(title=self.year_releases.format(datetime.now().year))
+
         release_title = self.release_report_title.format(release_name)
 
         # Создаем шаблон релиза

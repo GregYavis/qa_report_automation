@@ -45,6 +45,8 @@ class AtlassianConfig:
 
     qa_reports_page_id = 37127275
     confluence_title = '{}. Отчет о тестировании'
+    qa_confluence_id = 33587493
+
 
     def __init__(self):
         self.config = json.load(open(self.CONFIG_PATH))
