@@ -53,7 +53,6 @@ class ReleaseProcessor(AtlassianConfig):
 
     def ready_for_report_states(self):
         return [e.value for e in self.issue_states if e not in [self.issue_states.READY_FOR_QA,
-                                                                self.issue_states.OPEN,
                                                                 self.issue_states.REOPEN,
                                                                 self.issue_states.IN_DEVELOPMENT,
                                                                 self.issue_states.BLOCKED,
