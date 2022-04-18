@@ -62,11 +62,14 @@ class AtlassianConfig:
         self.issue_states = IssueStates
 
     def release_name(self, issue_key):
-        release_name = self.jira.issue_field_value(key=issue_key,  field='fixVersions')
-        if release_name:
-            return release_name[0]['name']
-        else:
-            return None
+        try:
+            release_name = self.jira.issue_field_value(key=issue_key,  field='fixVersions')
+            if release_name:
+                return release_name[0]['name']
+            else:
+                return None
+        except HTTPError:
+            logger.info('Обращение к скрытой или не существующей записи')
 
     def issue_status(self, issue_key):
         try:
@@ -90,15 +93,11 @@ class AtlassianConfig:
 
     def create_link(self, issue):
         new_article_confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
-
-        try:
-            self.jira.create_or_update_issue_remote_links(issue_key=issue.issue_key,
+        self.jira.create_or_update_issue_remote_links(issue_key=issue.issue_key,
                                                       link_url=''.join(
                                                           [self.confluence_viewpage, str(new_article_confluence_id)]),
                                                       title=self.confluence_title.format(issue.issue_key))
-        except HTTPError:
-            logger.info('Обращение к скрытой или не существующей записи')
-            
+
     def check_report_link_in_remote_links(self, issue):
         # Проверяем ссылки на отчет о тестировании
         links = self.jira.get_issue_remote_links(issue_key=issue.issue_key)
