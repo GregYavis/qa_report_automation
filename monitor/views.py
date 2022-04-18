@@ -37,6 +37,7 @@ class MainPage(View):
         if self.request.POST.get('manual_monitoring'):
             release_processor = ReleaseProcessor(self.request)
             current_releases = release_processor.issues_to_release()
+            print(current_releases)
             for release_name in current_releases:
                 release_processor.monitor_issues_manual(release_name)
 

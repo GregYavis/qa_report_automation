@@ -2,6 +2,9 @@ import json
 import logging
 import os
 from enum import Enum
+
+from requests import HTTPError
+
 from monitor.models import Issue
 from atlassian import Confluence
 from atlassian import Jira
@@ -66,10 +69,18 @@ class AtlassianConfig:
             return None
 
     def issue_status(self, issue_key):
-        return self.jira.issue_field_value(key=issue_key,  field='status')['name']
+        try:
+            return self.jira.issue_field_value(key=issue_key,  field='status')['name']
+        except HTTPError:
+            logger.info('Обращение к скрытой или не существующей записи')
 
     def issue_summary(self, issue_key):
-        return self.jira.issue_field_value(key=issue_key, field='summary')
+        try:
+            summary = self.jira.issue_field_value(key=issue_key, field='summary')
+            return summary
+        except HTTPError:
+            logger.info('Обращение к скрытой или не существующей записи')
+
 
     def get_confluence_page_id(self, title):
         if self.confluence.page_exists(space="AT", title=title):

@@ -88,7 +88,7 @@ class ReleaseProcessor(AtlassianConfig):
 
         logger.info('Проверка актуальности атрибутов задач перед созданием отчета')
         for issue in issues:
-            print(issue)
+
             jira_issue_summary = self.issue_summary(issue.issue_key)
             jira_release_name = self.release_name(issue.issue_key)
             jira_issue_status = self.issue_status(issue.issue_key)
