@@ -97,6 +97,7 @@ class ReleaseProcessor(AtlassianConfig):
                 issue.confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
                 issue.save()
                 self.create_link(issue=issue)
+            print(jira_release_name, issue.release_name)
             if jira_issue_summary != issue.issue_summary or \
                     jira_release_name != issue.release_name or \
                     jira_issue_status != issue.issue_status or \
