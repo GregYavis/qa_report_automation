@@ -17,7 +17,12 @@
     </form>
     {% elif not releases and has_issue %}
     <button type="submit" class="btn btn-outline-primary btn-sm">Нет задач к релизу</button>
-
+    {% else %}
+        <form action="{% url 'monitor:main-page' %}" method="POST">
+        <button type="submit" class="btn btn-outline-primary btn-sm" name="manual_monitoring" value="jira">
+            Проверка актуальности задач
+        </button>
+    </form>
     {% endif %}
 
         {% for release_name, issues in releases.items %}

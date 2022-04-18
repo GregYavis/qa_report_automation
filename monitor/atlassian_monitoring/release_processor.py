@@ -27,11 +27,13 @@ class ReleaseProcessor(AtlassianConfig):
         issues_to_nearest_releases = Issue.objects.filter(confluence_id__isnull=False,
                                                           release_report=False,
                                                           release_name__isnull=False)
-        #print(issues_to_nearest_releases)
-        return issues_to_nearest_releases
+        #print([issue.release_name for issue in issues_to_nearest_releases])
+        return [issue.release_name for issue in issues_to_nearest_releases]
 
     def get_feature_releases_info(self):
-        issues_to_release = self.issues_to_release()
+        issues_to_release = Issue.objects.filter(confluence_id__isnull=False,
+                                                          release_report=False,
+                                                          release_name__isnull=False)
         feature_releases = set(issue.release_name for issue in issues_to_release if
                                issue.issue_status in self.qa_states())
         info = {release_name: {
@@ -97,7 +99,6 @@ class ReleaseProcessor(AtlassianConfig):
                 issue.confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
                 issue.save()
                 self.create_link(issue=issue)
-            print(jira_release_name, issue.release_name)
             if jira_issue_summary != issue.issue_summary or \
                     jira_release_name != issue.release_name or \
                     jira_issue_status != issue.issue_status or \

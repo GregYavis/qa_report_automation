@@ -20,9 +20,6 @@ class MainPage(View):
 
     def get(self, *args, **kwargs):
         release_processor = ReleaseProcessor(self.request)
-        current_releases = release_processor.issues_to_release()
-        for release_name in current_releases:
-            release_processor.monitor_issues_manual(release_name)
         # Запускать проверку текущих значений параметров таски
         current_releases = release_processor.get_feature_releases_info()
         issues_exists = Issue.objects.all().exists()
@@ -36,6 +33,12 @@ class MainPage(View):
             # Обрабатываем текущие таски в статусах 'Ready for QA' 'Passed QA' 'In regression test' 'Ready for release'
             release_processor.first_launch_get_issues()
             return
+
+        if self.request.POST.get('manual_monitoring'):
+            release_processor = ReleaseProcessor(self.request)
+            current_releases = release_processor.issues_to_release()
+            for release_name in current_releases:
+                release_processor.monitor_issues_manual(release_name)
 
         if self.request.POST.get('release_name'):
             release_processor = ReleaseProcessor(self.request)
