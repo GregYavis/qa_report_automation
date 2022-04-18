@@ -69,6 +69,7 @@ class AtlassianConfig:
         return self.jira.issue_field_value(key=issue_key,  field='status')['name']
 
     def issue_summary(self, issue_key):
+        print(issue_key)
         return self.jira.issue_field_value(key=issue_key, field='summary')
 
     def get_confluence_page_id(self, title):
