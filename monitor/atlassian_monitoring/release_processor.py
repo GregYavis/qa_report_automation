@@ -22,10 +22,15 @@ class ReleaseProcessor(AtlassianConfig):
 
         self.request = request
 
+    @staticmethod
+    def issues_to_release():
+        issues_to_nearest_releases = Issue.objects.filter(confluence_id__isnull=False,
+                                                          release_report=False,
+                                                          release_name__isnull=False)
+        return issues_to_nearest_releases
+
     def get_feature_releases_info(self):
-        issues_to_release = Issue.objects.filter(confluence_id__isnull=False,
-                                                 release_report=False,
-                                                 release_name__isnull=False)
+        issues_to_release = self.issues_to_release()
         feature_releases = set(issue.release_name for issue in issues_to_release if
                                issue.issue_status in self.qa_states())
         info = {release_name: {

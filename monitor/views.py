@@ -20,6 +20,9 @@ class MainPage(View):
 
     def get(self, *args, **kwargs):
         release_processor = ReleaseProcessor(self.request)
+        current_releases = release_processor.issues_to_release()
+        for release_name in current_releases:
+            release_processor.monitor_issues_manual(release_name)
         # Запускать проверку текущих значений параметров таски
         current_releases = release_processor.get_feature_releases_info()
         issues_exists = Issue.objects.all().exists()
