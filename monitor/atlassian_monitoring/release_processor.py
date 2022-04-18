@@ -27,6 +27,7 @@ class ReleaseProcessor(AtlassianConfig):
         issues_to_nearest_releases = Issue.objects.filter(confluence_id__isnull=False,
                                                           release_report=False,
                                                           release_name__isnull=False)
+        print(issues_to_nearest_releases)
         return issues_to_nearest_releases
 
     def get_feature_releases_info(self):
