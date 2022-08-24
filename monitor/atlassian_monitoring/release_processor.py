@@ -85,7 +85,6 @@ class ReleaseProcessor(AtlassianConfig):
         и при условии отличия актуальных и ранее сохраненных атрибутов обновляем их
         """
         issues = Issue.objects.filter(release_name=release_name)
-
         logger.info('Проверка актуальности атрибутов задач перед созданием отчета')
         for issue in issues:
 
