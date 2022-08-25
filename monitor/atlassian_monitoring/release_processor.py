@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from time import sleep
 
 from monitor.atlassian_monitoring.base import AtlassianConfig
 from monitor.models import Issue
@@ -27,7 +28,6 @@ class ReleaseProcessor(AtlassianConfig):
         issues_to_nearest_releases = Issue.objects.filter(confluence_id__isnull=False,
                                                           release_report=False,
                                                           release_name__isnull=False)
-        #print([issue.release_name for issue in issues_to_nearest_releases])
         return [issue.release_name for issue in issues_to_nearest_releases]
 
     def get_feature_releases_info(self):
@@ -149,10 +149,18 @@ class ReleaseProcessor(AtlassianConfig):
             issue.release_report = True
             issue.save()
 
-
+    def create_issue(self, issue_key):
+        if not Issue.objects.filter(issue_key=issue_key):
+            logger.info(f'Запись в БД {issue_key}.')
+            self.save_issue(issue_key=issue_key,
+                            issue_summary=self.issue_summary(issue_key),
+                            release_name=self.release_name(issue_key),
+                            issue_status=self.issue_status(issue_key))
 
     def first_launch_get_issues(self):
+        global issues_by_release_name
         data = self.jira.jql(self.QA_QUERY)
+        processed_releases = []
         for issue in data["issues"]:
 
             issue_key = issue['key']
@@ -165,24 +173,31 @@ class ReleaseProcessor(AtlassianConfig):
                 pass
 
             if not self.confluence.page_exists(space='AT', title=self.confluence_title.format(issue_key)):
-                # self.confluence_page(title=self.confluence_title.format(issue_key)):
                 logger.info(f'Создание шаблона отчета для задачи {issue_key}.')
                 self.confluence.create_page(space='AT',
                                             title=self.confluence_title.format(issue_key),
                                             body=issue_report_template(issue_key),
                                             parent_id=self.qa_reports_page_id)
 
-
-            if not Issue.objects.filter(issue_key=issue_key):
-                logger.info(f'Запись в БД {issue_key}.')
-                self.save_issue(issue_key=issue_key,
-                                issue_summary=self.issue_summary(issue_key),
-                                release_name=self.release_name(issue_key),
-                                issue_status=self.issue_status(issue_key))
-
+            self.create_issue(issue_key=issue_key)
 
             issue = Issue.objects.get(issue_key=issue_key)
             # Проверяем есть ли у задачи прикрепленный линк с отчетом о тестировании, если нету, создаем.
             if not self.check_report_link_in_remote_links(issue=issue):
                 logger.info(f'Прикрепляем ссылку на отчет о тестировании задачи {issue_key}.')
                 self.create_link(issue=issue)
+            processed_releases.append(self.release_name(issue_key))
+            processed_releases[:] = set(processed_releases)
+        # Дополнительно подтягиваем данные о всех задачах из уже обработанных релизов
+        for release in processed_releases:
+            if release is not None:
+                issues_by_release_name = self.jira.jql(self.ISSUES_BY_RELEASE.format(release))
+                for _issue in issues_by_release_name["issues"]:
+                    _issue_key = _issue['key']
+                    try:
+                        # Для сборок не создаем таких же отчетов как для тасок
+                        if self.jira.issue_field_value(key=_issue_key, field='issuetype')['name'] == 'RC':
+                            continue
+                    except TypeError:
+                        pass
+                    self.create_issue(issue_key=_issue_key)

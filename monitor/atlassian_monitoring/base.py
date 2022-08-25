@@ -41,9 +41,14 @@ class AtlassianConfig:
     ROOT_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
     CONFIG_PATH = os.path.join(ROOT_PATH, 'config.json')
     JIRA_BASE_URL = json.load(open(CONFIG_PATH))['JIRA_URL']
-    QA_QUERY = 'project = 4Slovo AND status = "Ready for QA" or status = "Passed QA" or status ' \
-               '= "In regression test" or status = "Ready for release" ORDER BY priority DESC'
-
+    QA_QUERY = 'project = 4Slovo AND status = "Ready for QA" ' \
+               'or status = "Passed QA" ' \
+               'or status = "In regression test" ' \
+               'or status = "Ready for release" ' \
+               'or status = "Open" ' \
+               'or status = "Ready for review" ' \
+               'or status = "Ready for technical solution review" ORDER BY priority DESC'
+    ISSUES_BY_RELEASE = 'project = 4Slovo AND fixVersion = {}'
     confluence_viewpage = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId='
 
     qa_reports_page_id = 37127275
