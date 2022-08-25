@@ -6,5 +6,6 @@ data = "{'timestamp': 1625467613145, 'webhookEvent': 'jira:issue_updated', 'issu
 dat = data.replace("'", '"').replace('True', '"True"').replace('None', '"None"').replace('False', '"False"')
 
 
+print(json.loads(dat)['issue']['fields']['issuetype']['name'])
 atl = AtlassianMonitor(dat)
-
+print(atl.confluence.get_page_by_title(space="AT", title=atl.confluence_title().format(atl.issue_key))['id'])
