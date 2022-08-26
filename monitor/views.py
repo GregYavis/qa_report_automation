@@ -14,8 +14,6 @@ logger = logging.getLogger('django')
 
 
 # Create your views here.
-
-
 class MainPage(View):
 
     def get(self, *args, **kwargs):
@@ -34,6 +32,13 @@ class MainPage(View):
             release_processor.first_launch_get_issues()
             return
 
+        if self.request.POST.get('manual_monitoring'):
+            release_processor = ReleaseProcessor(self.request)
+            current_releases = set(release_processor.issues_to_release())
+            for release_name in current_releases:
+                release_processor.monitor_issues_manual(release_name)
+            return
+
         if self.request.POST.get('release_name'):
             release_processor = ReleaseProcessor(self.request)
             release_name = self.request.POST.get('release_name')
@@ -44,7 +49,7 @@ class MainPage(View):
                 release_processor.create_release_report()
             else:
                 messages.warning(self.request, 'Не все задачи из релиза прошли тестирование')
-
+            return
 
         else:
             monitor = AtlassianMonitor(request=self.request)
