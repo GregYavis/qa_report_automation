@@ -5,6 +5,7 @@ from enum import Enum
 
 from requests import HTTPError
 
+from confluence_table_template import issue_report_template
 from monitor.models import Issue
 from atlassian import Confluence
 from atlassian import Jira
@@ -55,7 +56,6 @@ class AtlassianConfig:
     confluence_title = '{}. Отчет о тестировании'
     qa_confluence_id = 33587493
 
-
     def __init__(self):
         self.config = json.load(open(self.CONFIG_PATH))
         self.jira = Jira(url=self.config["JIRA_URL"],
@@ -68,7 +68,7 @@ class AtlassianConfig:
 
     def release_name(self, issue_key):
         try:
-            release_name = self.jira.issue_field_value(key=issue_key,  field='fixVersions')
+            release_name = self.jira.issue_field_value(key=issue_key, field='fixVersions')
             if release_name:
                 return release_name[0]['name']
             else:
@@ -78,7 +78,7 @@ class AtlassianConfig:
 
     def issue_status(self, issue_key):
         try:
-            return self.jira.issue_field_value(key=issue_key,  field='status')['name']
+            return self.jira.issue_field_value(key=issue_key, field='status')['name']
         except HTTPError:
             logger.info('Обращение к скрытой или не существующей записи')
 
@@ -89,6 +89,19 @@ class AtlassianConfig:
         except HTTPError:
             logger.info('Обращение к скрытой или не существующей записи')
 
+    def create_issue(self, issue_key):
+        logger.info(f'Запись в БД {issue_key}.')
+        self.save_issue(issue_key=issue_key,
+                        issue_summary=self.issue_summary(issue_key),
+                        release_name=self.release_name(issue_key),
+                        issue_status=self.issue_status(issue_key))
+
+    def create_template(self, issue_key):
+        logger.info(f'Создание шаблона отчета для задачи {issue_key}.')
+        self.confluence.create_page(space='AT',
+                                    title=self.confluence_title.format(issue_key),
+                                    body=issue_report_template(issue_key),
+                                    parent_id=self.qa_reports_page_id)
 
     def get_confluence_page_id(self, title):
         if self.confluence.page_exists(space="AT", title=title):
@@ -101,7 +114,8 @@ class AtlassianConfig:
             new_article_confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
             self.jira.create_or_update_issue_remote_links(issue_key=issue.issue_key,
                                                           link_url=''.join(
-                                                              [self.confluence_viewpage, str(new_article_confluence_id)]),
+                                                              [self.confluence_viewpage,
+                                                               str(new_article_confluence_id)]),
                                                           title=self.confluence_title.format(issue.issue_key))
         except HTTPError:
             logger.info('Обращение к скрытой или не существующей записи')

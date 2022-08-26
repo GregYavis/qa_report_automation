@@ -79,11 +79,15 @@ class ReleaseProcessor(AtlassianConfig):
         return list(issues_in_release) == list(ready_issues)
 
     def monitor_issues_manual(self, release_name):
+
         """
         При нажатии кнопки проверяем атрибуты задач на актуальность, на тот случай
         Если на момент обновления одного из атрибутов сервис был не доступен для вебхука,
         и при условии отличия актуальных и ранее сохраненных атрибутов обновляем их
         """
+        # Что бы задачи не пролетали мимо бота в случае если перешли в тестирование во время когда он был не доступен
+        self.first_launch_get_issues()
+        #
         issues = Issue.objects.filter(release_name=release_name)
         logger.info('Проверка актуальности атрибутов задач перед созданием отчета')
         for issue in issues:
@@ -149,16 +153,8 @@ class ReleaseProcessor(AtlassianConfig):
             issue.release_report = True
             issue.save()
 
-    def create_issue(self, issue_key):
-        if not Issue.objects.filter(issue_key=issue_key):
-            logger.info(f'Запись в БД {issue_key}.')
-            self.save_issue(issue_key=issue_key,
-                            issue_summary=self.issue_summary(issue_key),
-                            release_name=self.release_name(issue_key),
-                            issue_status=self.issue_status(issue_key))
 
     def first_launch_get_issues(self):
-        global issues_by_release_name
         data = self.jira.jql(self.QA_QUERY)
         processed_releases = []
         for issue in data["issues"]:
@@ -173,13 +169,10 @@ class ReleaseProcessor(AtlassianConfig):
                 pass
 
             if not self.confluence.page_exists(space='AT', title=self.confluence_title.format(issue_key)):
-                logger.info(f'Создание шаблона отчета для задачи {issue_key}.')
-                self.confluence.create_page(space='AT',
-                                            title=self.confluence_title.format(issue_key),
-                                            body=issue_report_template(issue_key),
-                                            parent_id=self.qa_reports_page_id)
+                self.create_template(issue_key)
 
-            self.create_issue(issue_key=issue_key)
+            if not Issue.objects.filter(issue_key=issue_key):
+                self.create_issue(issue_key=issue_key)
 
             issue = Issue.objects.get(issue_key=issue_key)
             # Проверяем есть ли у задачи прикрепленный линк с отчетом о тестировании, если нету, создаем.
@@ -188,7 +181,7 @@ class ReleaseProcessor(AtlassianConfig):
                 self.create_link(issue=issue)
             processed_releases.append(self.release_name(issue_key))
             processed_releases[:] = set(processed_releases)
-        # Дополнительно подтягиваем данные о всех задачах из уже обработанных релизов
+        # Дополнительно подтягиваем данные о всех задачах по затронутым релизам
         for release in processed_releases:
             if release is not None:
                 issues_by_release_name = self.jira.jql(self.ISSUES_BY_RELEASE.format(release))
@@ -200,4 +193,5 @@ class ReleaseProcessor(AtlassianConfig):
                             continue
                     except TypeError:
                         pass
-                    self.create_issue(issue_key=_issue_key)
+                    if not Issue.objects.filter(issue_key=_issue_key):
+                        self.create_issue(issue_key=_issue_key)
