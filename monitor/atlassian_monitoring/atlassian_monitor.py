@@ -107,7 +107,7 @@ class AtlassianMonitor(AtlassianConfig):
             self.set_issue_confluence_id()
         elif issue.confluence_id:
             logger.info(f'Задача уже имеет отчет о тестировании и прикрепленную на него ссылку')
-            return
+        return
 
     def _create_article_linked_with_task(self):
         logger.info(f'Создана статья с шаблоном для отчета по тестированию задачи {self.issue_key}')
@@ -118,4 +118,7 @@ class AtlassianMonitor(AtlassianConfig):
         self.set_issue_confluence_id()
         # Создать линку на созданную статью к задаче в jira
         logger.info(f'Прикрепляем на отчет о тестировании к задаче {self.issue_key}.')
-        self.create_link(issue=self.issue())
+        if not self.check_report_link_in_remote_links(issue=self.issue()):
+            self.create_link(issue=self.issue())
+        return
+

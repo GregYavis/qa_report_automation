@@ -91,12 +91,11 @@ class ReleaseProcessor(AtlassianConfig):
         issues = Issue.objects.filter(release_name=release_name)
         logger.info('Проверка актуальности атрибутов задач перед созданием отчета')
         for issue in issues:
-
             jira_issue_summary = self.issue_summary(issue.issue_key)
             jira_release_name = self.release_name(issue.issue_key)
             jira_issue_status = self.issue_status(issue.issue_key)
             confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
-            if not self.confluence.page_exists(space='AT', title=self.confluence_title.format(issue.issue_key)):
+            if confluence_id in None:
                 self.confluence.create_page(space='AT',
                                             title=self.confluence_title.format(issue.issue_key),
                                             body=issue_report_template(issue.issue_key),
