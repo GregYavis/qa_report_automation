@@ -95,7 +95,7 @@ class ReleaseProcessor(AtlassianConfig):
             jira_release_name = self.release_name(issue.issue_key)
             jira_issue_status = self.issue_status(issue.issue_key)
             confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
-            if confluence_id in None:
+            if confluence_id is None:
                 self.confluence.create_page(space='AT',
                                             title=self.confluence_title.format(issue.issue_key),
                                             body=issue_report_template(issue.issue_key),
