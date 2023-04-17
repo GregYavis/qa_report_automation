@@ -123,6 +123,8 @@ class AtlassianConfig:
     def check_report_link_in_remote_links(self, issue):
         # Проверяем ссылки на отчет о тестировании
         logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}  +_+_+_+ Проверка существования линка к задаче {issue.issue_key} +_+_+_+")
+        logger.info(f'EXPEXT {self.confluence_viewpage.format(str(issue.confluence_id))}')
+
         links = self.jira.get_issue_remote_links(issue_key=issue.issue_key)
         urls = [nested_lookup(key='url', document=link)[0] for link in links]
         logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+{links}")
@@ -135,9 +137,13 @@ class AtlassianConfig:
         elif (self.confluence_viewpage.format(str(issue.confluence_id)) not in urls) and not self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key)):
             logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк не существует {issue.issue_key} +_+_+_+")
             return False
+        elif (self.confluence_viewpage.format(str(issue.confluence_id)) not in urls) and self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key)):
+            logger.info(
+                f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Статья существует, линк тоже но по какой-то причине не отрабатывается провверкой {issue.issue_key} +_+_+_+")
+            return True
         else:
             logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ ПРОБЛЕМЫ С ОБНАРУЖЕНИЕМ ЛИНКА, НЕОБРАОТАННОЕ ИСКЛЮЧЕНИЕ {issue.issue_key} +_+_+_+")
-
+        return
     @staticmethod
     def update_issue(issue_key, issue_summary, issue_status, release_name, confluence_id):
         issue = Issue.objects.get(issue_key=issue_key)
