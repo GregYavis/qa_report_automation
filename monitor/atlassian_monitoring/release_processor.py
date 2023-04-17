@@ -104,6 +104,7 @@ class ReleaseProcessor(AtlassianConfig):
                 logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} ***** {issue_conf_info} *****")
                 issue.confluence_id = self.get_confluence_page_id(
                     title=self.confluence_title.format(issue.issue_key))
+                confluence_id = issue.confluence_id
                 issue.save()
             #Проверить нет ли уже линка у задачи
             if not self.check_report_link_in_remote_links(issue=issue):

@@ -132,12 +132,11 @@ class AtlassianConfig:
                 (self.confluence_viewpage.format(str(issue.confluence_id)) in duplicate_urls):
             logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк существует {issue.issue_key} +_+_+_+")
             return True
-        elif (self.confluence_viewpage.format(str(issue.confluence_id)) not in urls) and \
-                (self.confluence_viewpage.format(str(issue.confluence_id)) not in duplicate_urls):
+        elif (self.confluence_viewpage.format(str(issue.confluence_id)) not in urls) and not self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key)):
             logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк не существует {issue.issue_key} +_+_+_+")
             return False
-        logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ ПРОБЛЕМЫ С ОБНАРУЖЕНИЕМ ЛИНКА, НЕОБРАОТАННОЕ ИСКЛЮЧЕНИЕ {issue.issue_key} +_+_+_+")
-        return False
+        else:
+            logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ ПРОБЛЕМЫ С ОБНАРУЖЕНИЕМ ЛИНКА, НЕОБРАОТАННОЕ ИСКЛЮЧЕНИЕ {issue.issue_key} +_+_+_+")
 
     @staticmethod
     def update_issue(issue_key, issue_summary, issue_status, release_name, confluence_id):
