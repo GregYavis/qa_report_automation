@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from datetime import datetime
 from enum import Enum
 
 from requests import HTTPError
@@ -74,30 +75,30 @@ class AtlassianConfig:
             else:
                 return None
         except HTTPError:
-            logger.info('Обращение к скрытой или не существующей записи')
+            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
 
     def issue_status(self, issue_key):
         try:
             return self.jira.issue_field_value(key=issue_key, field='status')['name']
         except HTTPError:
-            logger.info('Обращение к скрытой или не существующей записи')
+            logger.info('{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
 
     def issue_summary(self, issue_key):
         try:
             summary = self.jira.issue_field_value(key=issue_key, field='summary')
             return summary
         except HTTPError:
-            logger.info('Обращение к скрытой или не существующей записи')
+            logger.info('{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
 
     def create_issue(self, issue_key):
-        logger.info(f'Запись в БД {issue_key}.')
+        logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Запись в БД {issue_key}.')
         self.save_issue(issue_key=issue_key,
                         issue_summary=self.issue_summary(issue_key),
                         release_name=self.release_name(issue_key),
                         issue_status=self.issue_status(issue_key))
 
     def create_template(self, issue_key):
-        logger.info(f'Создание шаблона отчета для задачи {issue_key}.')
+        logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создание шаблона отчета для задачи {issue_key}.')
         self.confluence.create_page(space='AT',
                                     title=self.confluence_title.format(issue_key),
                                     body=issue_report_template(issue_key),
@@ -117,25 +118,25 @@ class AtlassianConfig:
                                                               link_url=self.confluence_viewpage.format(str(new_article_confluence_id)),
                                                               title=self.confluence_title.format(issue.issue_key))
         except HTTPError:
-            logger.info('Обращение к скрытой или не существующей записи')
+            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
 
     def check_report_link_in_remote_links(self, issue):
         # Проверяем ссылки на отчет о тестировании
-        logger.info(f"+_+_+_+ Проверка существования линка к задаче {issue.issue_key} +_+_+_+")
+        logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}  +_+_+_+ Проверка существования линка к задаче {issue.issue_key} +_+_+_+")
         links = self.jira.get_issue_remote_links(issue_key=issue.issue_key)
         urls = [nested_lookup(key='url', document=link)[0] for link in links]
-        logger.info(f"+_+_+_+{links}")
-        logger.info(f"+_+_+_+{urls}")
+        logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+{links}")
+        logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+{urls}")
         duplicate_urls = [data['object']['urls'] for data in links]
         if (self.confluence_viewpage.format(str(issue.confluence_id)) in urls) or \
                 (self.confluence_viewpage.format(str(issue.confluence_id)) in duplicate_urls):
-            logger.info(f"+_+_+_+ Линк существует {issue.issue_key} +_+_+_+")
+            logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк существует {issue.issue_key} +_+_+_+")
             return True
         elif (self.confluence_viewpage.format(str(issue.confluence_id)) not in urls) and \
                 (self.confluence_viewpage.format(str(issue.confluence_id)) not in duplicate_urls):
-            logger.info(f"+_+_+_+ Линк не существует {issue.issue_key} +_+_+_+")
+            logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк не существует {issue.issue_key} +_+_+_+")
             return False
-        logger.info(f"+_+_+_+ ПРОБЛЕМЫ С ОБНАРУЖЕНИЕМ ЛИНКА, НЕОБРАОТАННОЕ ИСКЛЮЧЕНИЕ {issue.issue_key} +_+_+_+")
+        logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ ПРОБЛЕМЫ С ОБНАРУЖЕНИЕМ ЛИНКА, НЕОБРАОТАННОЕ ИСКЛЮЧЕНИЕ {issue.issue_key} +_+_+_+")
         return False
 
     @staticmethod
