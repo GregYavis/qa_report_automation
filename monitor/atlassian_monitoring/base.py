@@ -127,7 +127,7 @@ class AtlassianConfig:
         urls = [nested_lookup(key='url', document=link)[0] for link in links]
         logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+{links}")
         logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+{urls}")
-        duplicate_urls = [data['object']['urls'] for data in links]
+        duplicate_urls = [data['object']['url'] for data in links]
         if (self.confluence_viewpage.format(str(issue.confluence_id)) in urls) or \
                 (self.confluence_viewpage.format(str(issue.confluence_id)) in duplicate_urls):
             logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк существует {issue.issue_key} +_+_+_+")
