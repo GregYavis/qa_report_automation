@@ -130,6 +130,8 @@ class AtlassianConfig:
         logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+{links}")
         logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+{urls}")
         duplicate_urls = [data['object']['url'] for data in links]
+        if urls.count(self.confluence_viewpage.format(str(issue.confluence_id))):
+            logger.info(f':::::::::::::::::{issue.issue_key}:::::::::::::::::')
         if (self.confluence_viewpage.format(str(issue.confluence_id)) in urls) or \
                 (self.confluence_viewpage.format(str(issue.confluence_id)) in duplicate_urls):
             logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк существует {issue.issue_key} +_+_+_+")
