@@ -132,11 +132,6 @@ class AtlassianConfig:
         duplicate_urls = [data['object']['url'] for data in links]
         if urls.count(self.confluence_viewpage.format(str(issue.confluence_id))) > 1:
             logger.info(f':::::::::::::::::{issue.issue_key}:::::::::::::::::')
-            iss = self.jira.issue(issue.issue_key)
-            iss_links = iss.fields.issuelinks
-            logger.info(f':::{iss_links}')
-            for lnk in iss_links:
-                logger.info(f":::{lnk.id}")
         if (self.confluence_viewpage.format(str(issue.confluence_id)) in urls) or \
                 (self.confluence_viewpage.format(str(issue.confluence_id)) in duplicate_urls):
             logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк существует {issue.issue_key} +_+_+_+")
