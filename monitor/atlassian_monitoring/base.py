@@ -81,14 +81,14 @@ class AtlassianConfig:
         try:
             return self.jira.issue_field_value(key=issue_key, field='status')['name']
         except HTTPError:
-            logger.info('{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
+            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
 
     def issue_summary(self, issue_key):
         try:
             summary = self.jira.issue_field_value(key=issue_key, field='summary')
             return summary
         except HTTPError:
-            logger.info('{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
+            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
 
     def create_issue(self, issue_key):
         logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Запись в БД {issue_key}.')
