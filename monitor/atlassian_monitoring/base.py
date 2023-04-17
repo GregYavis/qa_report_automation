@@ -137,13 +137,13 @@ class AtlassianConfig:
         elif (self.confluence_viewpage.format(str(issue.confluence_id)) not in urls) and not self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key)):
             logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк не существует {issue.issue_key} +_+_+_+")
             return False
-        elif (self.confluence_viewpage.format(str(issue.confluence_id)) not in urls) and self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key)):
+        else:
             logger.info(
                 f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Статья существует, линк тоже но по какой-то причине не отрабатывается провверкой {issue.issue_key} +_+_+_+")
-            return True
-        else:
-            logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ ПРОБЛЕМЫ С ОБНАРУЖЕНИЕМ ЛИНКА, НЕОБРАОТАННОЕ ИСКЛЮЧЕНИЕ {issue.issue_key} +_+_+_+")
-        return
+            issue.confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
+            issue.save()
+            return False
+
     @staticmethod
     def update_issue(issue_key, issue_summary, issue_status, release_name, confluence_id):
         issue = Issue.objects.get(issue_key=issue_key)
