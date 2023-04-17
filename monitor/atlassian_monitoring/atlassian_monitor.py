@@ -49,8 +49,7 @@ class AtlassianMonitor(AtlassianConfig):
                 issue.release_name = self.jira_release_name
                 issue.save()
             if self.jira_issue_summary != issue.issue_summary or \
-                    self.jira_issue_status != issue.issue_status or \
-                    confluence_id != issue.confluence_id:
+                    self.jira_issue_status != issue.issue_status:
                 self.update_issue(self.issue_key,
                                   self.jira_issue_summary,
                                   self.jira_issue_status,
@@ -65,8 +64,10 @@ class AtlassianMonitor(AtlassianConfig):
                                 issue_summary=self.jira_issue_summary,
                                 release_name=self.jira_release_name,
                                 issue_status=self.jira_issue_status)
+                self.create_report()
             except IntegrityError:
                 logger.info(f'Задача {self.issue_key} уже занесена в БД')
+        return
 
 
     def set_issue_confluence_id(self):
@@ -100,8 +101,14 @@ class AtlassianMonitor(AtlassianConfig):
         Если id есть - возвращаемся.
         """
         issue = self.issue()
+
+        logger.info(f'%-%-%-% Проверка на существование шаблона для отчета по задаче {self.issue_key} %-%-%-%')
         if not issue.confluence_id and not self.report_exists(self.issue_key):
             self._create_article_linked_with_task()
+            logger.info(f'Прикрепляем на отчет о тестировании к задаче {self.issue_key}.')
+            if not self.check_report_link_in_remote_links(issue=self.issue()):
+                self.create_link(issue=self.issue())
+            self.set_issue_confluence_id()
         elif not issue.confluence_id and self.report_exists(self.issue_key):
             logger.info(f'Задача уже имеет отчет о тестировании. Добавлен confluence_id отчета задачи {self.issue_key}')
             self.set_issue_confluence_id()
@@ -115,10 +122,8 @@ class AtlassianMonitor(AtlassianConfig):
                                     title=self.confluence_title.format(self.issue_key),
                                     body=issue_report_template(self.issue_key),
                                     parent_id=self.qa_reports_page_id)
-        self.set_issue_confluence_id()
+
         # Создать линку на созданную статью к задаче в jira
-        logger.info(f'Прикрепляем на отчет о тестировании к задаче {self.issue_key}.')
-        if not self.check_report_link_in_remote_links(issue=self.issue()):
-            self.create_link(issue=self.issue())
+
         return
 

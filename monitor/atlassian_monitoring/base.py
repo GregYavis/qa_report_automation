@@ -50,7 +50,7 @@ class AtlassianConfig:
                'or status = "Ready for review" ' \
                'or status = "Ready for technical solution review" ORDER BY priority DESC'
     ISSUES_BY_RELEASE = 'project = 4Slovo AND fixVersion = {}'
-    confluence_viewpage = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId='
+    confluence_viewpage = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId={}'
 
     qa_reports_page_id = 37127275
     confluence_title = '{}. Отчет о тестировании'
@@ -111,23 +111,32 @@ class AtlassianConfig:
 
     def create_link(self, issue):
         try:
-            new_article_confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
-            self.jira.create_or_update_issue_remote_links(issue_key=issue.issue_key,
-                                                          link_url=''.join(
-                                                              [self.confluence_viewpage,
-                                                               str(new_article_confluence_id)]),
-                                                          title=self.confluence_title.format(issue.issue_key))
+            if not self.check_report_link_in_remote_links(issue=issue):
+                new_article_confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
+                self.jira.create_or_update_issue_remote_links(issue_key=issue.issue_key,
+                                                              link_url=self.confluence_viewpage.format(str(new_article_confluence_id)),
+                                                              title=self.confluence_title.format(issue.issue_key))
         except HTTPError:
             logger.info('Обращение к скрытой или не существующей записи')
 
     def check_report_link_in_remote_links(self, issue):
         # Проверяем ссылки на отчет о тестировании
+        logger.info(f"+_+_+_+ Проверка существования линка к задаче {issue.issue_key} +_+_+_+")
         links = self.jira.get_issue_remote_links(issue_key=issue.issue_key)
         urls = [nested_lookup(key='url', document=link)[0] for link in links]
-        if ''.join([self.confluence_viewpage, str(issue.confluence_id)]) in urls:
+        logger.info(f"+_+_+_+{links}")
+        logger.info(f"+_+_+_+{urls}")
+        duplicate_urls = [data['object']['urls'] for data in links]
+        if (self.confluence_viewpage.format(str(issue.confluence_id)) in urls) or \
+                (self.confluence_viewpage.format(str(issue.confluence_id)) in duplicate_urls):
+            logger.info(f"+_+_+_+ Линк существует {issue.issue_key} +_+_+_+")
             return True
-        else:
+        elif (self.confluence_viewpage.format(str(issue.confluence_id)) not in urls) and \
+                (self.confluence_viewpage.format(str(issue.confluence_id)) not in duplicate_urls):
+            logger.info(f"+_+_+_+ Линк не существует {issue.issue_key} +_+_+_+")
             return False
+        logger.info(f"+_+_+_+ ПРОБЛЕМЫ С ОБНАРУЖЕНИЕМ ЛИНКА, НЕОБРАОТАННОЕ ИСКЛЮЧЕНИЕ {issue.issue_key} +_+_+_+")
+        return False
 
     @staticmethod
     def update_issue(issue_key, issue_summary, issue_status, release_name, confluence_id):

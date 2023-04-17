@@ -88,6 +88,7 @@ class ReleaseProcessor(AtlassianConfig):
         # Что бы задачи не пролетали мимо бота в случае если перешли в тестирование во время когда он был не доступен
         self.first_launch_get_issues()
         #
+        # Найти все таски из релиза, если их нет в БД, добавить.
         issues = Issue.objects.filter(release_name=release_name)
         logger.info('Проверка актуальности атрибутов задач перед созданием отчета')
         for issue in issues:
@@ -96,12 +97,16 @@ class ReleaseProcessor(AtlassianConfig):
             jira_issue_status = self.issue_status(issue.issue_key)
             confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
             if confluence_id is None:
-                self.confluence.create_page(space='AT',
-                                            title=self.confluence_title.format(issue.issue_key),
-                                            body=issue_report_template(issue.issue_key),
-                                            parent_id=self.qa_reports_page_id)
-                issue.confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
+                issue_conf_info = self.confluence.create_page(space='AT',
+                                                              title=self.confluence_title.format(issue.issue_key),
+                                                              body=issue_report_template(issue.issue_key),
+                                                              parent_id=self.qa_reports_page_id)
+                logger.info(f"***** {issue_conf_info} *****")
+                issue.confluence_id = self.get_confluence_page_id(
+                    title=self.confluence_title.format(issue.issue_key))
                 issue.save()
+            #Проверить нет ли уже линка у задачи
+            if not self.check_report_link_in_remote_links(issue=issue):
                 self.create_link(issue=issue)
             if jira_issue_summary != issue.issue_summary or \
                     jira_release_name != issue.release_name or \
