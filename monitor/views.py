@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from django.contrib import messages
 from django.shortcuts import render, redirect
@@ -26,13 +27,14 @@ class MainPage(View):
 
     def request_handler(self):
 
-        if self.request.POST.get('monitor'):
+        if self.request.POST.get('monitor'): # Кнока которая отображается в случае если в БД нет задач
             release_processor = ReleaseProcessor(self.request)
             # Обрабатываем текущие таски в статусах 'Ready for QA' 'Passed QA' 'In regression test' 'Ready for release'
             release_processor.first_launch_get_issues()
             return
 
-        if self.request.POST.get('manual_monitoring'):
+        if self.request.POST.get('manual_monitoring'): # Кнопка "Проверка актуальности задач"
+            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} ------------Проверка актуальности задач сохраненных в БД------------')
             release_processor = ReleaseProcessor(self.request)
             current_releases = set(release_processor.issues_to_release())
             for release_name in current_releases:
@@ -54,14 +56,14 @@ class MainPage(View):
         else:
             monitor = AtlassianMonitor(request=self.request)
             if monitor.issue_is_rc():
-                logger.info('Задача пропущена т.к. тип задачи RC')
+                logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача пропущена т.к. тип задачи RC')
                 return
 
             if monitor.jira_issue_event == monitor.JIRA_ISSUE_UPDATED:
                 monitor.check_and_update_issue()
                 if monitor.issue_ready_for_qa():
                     monitor.create_report()
-                    return
+                return
 
             elif monitor.jira_issue_event == monitor.JIRA_ISSUE_CREATED:
                 logger.info(monitor.issue_key)
@@ -70,7 +72,7 @@ class MainPage(View):
                                        issue_summary=monitor.jira_issue_summary,
                                        release_name=monitor.jira_release_name,
                                        issue_status=monitor.jira_issue_status)
-                    logger.info('Create database entry for created issue')
+                    logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")}  Create database entry for created issue')
                 return
 
     def post(self, *args, **kwargs):

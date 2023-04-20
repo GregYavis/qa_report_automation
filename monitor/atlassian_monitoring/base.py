@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from datetime import datetime
 from enum import Enum
 
 from requests import HTTPError
@@ -50,7 +51,7 @@ class AtlassianConfig:
                'or status = "Ready for review" ' \
                'or status = "Ready for technical solution review" ORDER BY priority DESC'
     ISSUES_BY_RELEASE = 'project = 4Slovo AND fixVersion = {}'
-    confluence_viewpage = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId='
+    confluence_viewpage = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId={}'
 
     qa_reports_page_id = 37127275
     confluence_title = '{}. Отчет о тестировании'
@@ -74,30 +75,30 @@ class AtlassianConfig:
             else:
                 return None
         except HTTPError:
-            logger.info('Обращение к скрытой или не существующей записи')
+            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
 
     def issue_status(self, issue_key):
         try:
             return self.jira.issue_field_value(key=issue_key, field='status')['name']
         except HTTPError:
-            logger.info('Обращение к скрытой или не существующей записи')
+            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
 
     def issue_summary(self, issue_key):
         try:
             summary = self.jira.issue_field_value(key=issue_key, field='summary')
             return summary
         except HTTPError:
-            logger.info('Обращение к скрытой или не существующей записи')
+            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
 
     def create_issue(self, issue_key):
-        logger.info(f'Запись в БД {issue_key}.')
+        logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Запись в БД {issue_key}.')
         self.save_issue(issue_key=issue_key,
                         issue_summary=self.issue_summary(issue_key),
                         release_name=self.release_name(issue_key),
                         issue_status=self.issue_status(issue_key))
 
     def create_template(self, issue_key):
-        logger.info(f'Создание шаблона отчета для задачи {issue_key}.')
+        logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создание шаблона отчета для задачи {issue_key}.')
         self.confluence.create_page(space='AT',
                                     title=self.confluence_title.format(issue_key),
                                     body=issue_report_template(issue_key),
@@ -111,22 +112,38 @@ class AtlassianConfig:
 
     def create_link(self, issue):
         try:
-            new_article_confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
-            self.jira.create_or_update_issue_remote_links(issue_key=issue.issue_key,
-                                                          link_url=''.join(
-                                                              [self.confluence_viewpage,
-                                                               str(new_article_confluence_id)]),
-                                                          title=self.confluence_title.format(issue.issue_key))
+            if not self.check_report_link_in_remote_links(issue=issue):
+                new_article_confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
+                self.jira.create_or_update_issue_remote_links(issue_key=issue.issue_key,
+                                                              link_url=self.confluence_viewpage.format(str(new_article_confluence_id)),
+                                                              title=self.confluence_title.format(issue.issue_key))
         except HTTPError:
-            logger.info('Обращение к скрытой или не существующей записи')
+            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
 
     def check_report_link_in_remote_links(self, issue):
         # Проверяем ссылки на отчет о тестировании
+        logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}  +_+_+_+ Проверка существования линка к задаче {issue.issue_key} +_+_+_+")
+        logger.info(f'EXPEXT {self.confluence_viewpage.format(str(issue.confluence_id))}')
+
         links = self.jira.get_issue_remote_links(issue_key=issue.issue_key)
         urls = [nested_lookup(key='url', document=link)[0] for link in links]
-        if ''.join([self.confluence_viewpage, str(issue.confluence_id)]) in urls:
+        logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+{links}")
+        logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+{urls}")
+        duplicate_urls = [data['object']['url'] for data in links]
+        if urls.count(self.confluence_viewpage.format(str(issue.confluence_id))) > 1:
+            logger.info(f':::::::::::::::::https://jira.4slovo.ru/browse/{issue.issue_key}:::::::::::::::::')
+        if (self.confluence_viewpage.format(str(issue.confluence_id)) in urls) or \
+                (self.confluence_viewpage.format(str(issue.confluence_id)) in duplicate_urls):
+            logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк существует {issue.issue_key} +_+_+_+")
             return True
+        elif (self.confluence_viewpage.format(str(issue.confluence_id)) not in urls) and not self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key)):
+            logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк не существует {issue.issue_key} +_+_+_+")
+            return False
         else:
+            logger.info(
+                f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Статья существует, линк тоже но по какой-то причине не отрабатывается провверкой {issue.issue_key} +_+_+_+")
+            issue.confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
+            issue.save()
             return False
 
     @staticmethod
