@@ -116,7 +116,20 @@ class AtlassianMonitor(AtlassianConfig):
         elif issue.confluence_id:
             logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача уже имеет отчет о тестировании и прикрепленную на него ссылку')
         return
-
+    def _check_and_create_report(self):
+        issue = self.issue()
+        if not issue.confluence_id and not self.report_exists(self.issue_key):
+            self._create_article_linked_with_task()
+            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Прикрепляем на отчет о тестировании к задаче {self.issue_key}.')
+            if not self.check_report_link_in_remote_links(issue=self.issue()):
+                self.create_link(issue=self.issue())
+            self.set_issue_confluence_id()
+        elif not issue.confluence_id and self.report_exists(self.issue_key):
+            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача уже имеет отчет о тестировании. Добавлен confluence_id отчета задачи {self.issue_key}')
+            self.set_issue_confluence_id()
+        elif issue.confluence_id:
+            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача уже имеет отчет о тестировании и прикрепленную на него ссылку')
+        return
     def _create_article_linked_with_task(self):
         logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создана статья с шаблоном для отчета по тестированию задачи {self.issue_key}')
         self.confluence.create_page(space='AT',
