@@ -61,7 +61,7 @@ class MainPage(View):
 
             if monitor.jira_issue_event == monitor.JIRA_ISSUE_UPDATED:
                 monitor.check_and_update_issue()
-                if not monitor.report_exists(monitor.issue_key):
+                if not monitor.report_exists(monitor.issue_key) and monitor.issue_status in monitor.qa_states():
                     monitor.create_report()
                 if monitor.issue_ready_for_qa():
                     monitor.create_report()

@@ -67,6 +67,32 @@ class AtlassianConfig:
                                      password=self.config["PASSWORD"])
         self.issue_states = IssueStates
 
+    def qa_states(self):
+        return [e.value for e in self.issue_states if e not in [self.issue_states.RELEASED,
+                                                                self.issue_states.READY_FOR_QA,
+                                                                self.issue_states.OPEN,
+                                                                self.issue_states.REOPEN,
+                                                                self.issue_states.IN_DEVELOPMENT,
+                                                                self.issue_states.BLOCKED,
+                                                                self.issue_states.READY_FOR_REVIEW,
+                                                                self.issue_states.READY_FOR_TECHNICAL_SOLUTION_REVIEW,
+                                                                self.issue_states.READY_FOR_DEVELOPMENT,
+                                                                self.issue_states.TECHNICAL_SOLUTION,
+                                                                self.issue_states.IN_PROGRESS,
+                                                                self.issue_states.IN_QA]]
+
+    def ready_for_report_states(self):
+        return [e.value for e in self.issue_states if e not in [self.issue_states.READY_FOR_QA,
+                                                                self.issue_states.REOPEN,
+                                                                self.issue_states.IN_DEVELOPMENT,
+                                                                self.issue_states.BLOCKED,
+                                                                self.issue_states.READY_FOR_REVIEW,
+                                                                self.issue_states.READY_FOR_TECHNICAL_SOLUTION_REVIEW,
+                                                                self.issue_states.READY_FOR_DEVELOPMENT,
+                                                                self.issue_states.TECHNICAL_SOLUTION,
+                                                                self.issue_states.IN_PROGRESS,
+                                                                self.issue_states.IN_QA]]
+
     def release_name(self, issue_key):
         try:
             release_name = self.jira.issue_field_value(key=issue_key, field='fixVersions')
@@ -75,20 +101,23 @@ class AtlassianConfig:
             else:
                 return None
         except HTTPError:
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
+            logger.info(
+                f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
 
     def issue_status(self, issue_key):
         try:
             return self.jira.issue_field_value(key=issue_key, field='status')['name']
         except HTTPError:
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
+            logger.info(
+                f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
 
     def issue_summary(self, issue_key):
         try:
             summary = self.jira.issue_field_value(key=issue_key, field='summary')
             return summary
         except HTTPError:
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
+            logger.info(
+                f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
 
     def create_issue(self, issue_key):
         logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Запись в БД {issue_key}.')
@@ -113,16 +142,20 @@ class AtlassianConfig:
     def create_link(self, issue):
         try:
             if not self.check_report_link_in_remote_links(issue=issue):
-                new_article_confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
+                new_article_confluence_id = self.get_confluence_page_id(
+                    title=self.confluence_title.format(issue.issue_key))
                 self.jira.create_or_update_issue_remote_links(issue_key=issue.issue_key,
-                                                              link_url=self.confluence_viewpage.format(str(new_article_confluence_id)),
+                                                              link_url=self.confluence_viewpage.format(
+                                                                  str(new_article_confluence_id)),
                                                               title=self.confluence_title.format(issue.issue_key))
         except HTTPError:
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
+            logger.info(
+                f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
 
     def check_report_link_in_remote_links(self, issue):
         # Проверяем ссылки на отчет о тестировании
-        logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}  +_+_+_+ Проверка существования линка к задаче {issue.issue_key} +_+_+_+")
+        logger.info(
+            f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}  +_+_+_+ Проверка существования линка к задаче {issue.issue_key} +_+_+_+")
         logger.info(f'EXPEXT {self.confluence_viewpage.format(str(issue.confluence_id))}')
 
         links = self.jira.get_issue_remote_links(issue_key=issue.issue_key)
@@ -134,10 +167,14 @@ class AtlassianConfig:
             logger.info(f':::::::::::::::::https://jira.4slovo.ru/browse/{issue.issue_key}:::::::::::::::::')
         if (self.confluence_viewpage.format(str(issue.confluence_id)) in urls) or \
                 (self.confluence_viewpage.format(str(issue.confluence_id)) in duplicate_urls):
-            logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк существует {issue.issue_key} +_+_+_+")
+            logger.info(
+                f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк существует {issue.issue_key} +_+_+_+")
             return True
-        elif (self.confluence_viewpage.format(str(issue.confluence_id)) not in urls) and not self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key)):
-            logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк не существует {issue.issue_key} +_+_+_+")
+        elif (self.confluence_viewpage.format(
+                str(issue.confluence_id)) not in urls) and not self.get_confluence_page_id(
+                title=self.confluence_title.format(issue.issue_key)):
+            logger.info(
+                f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк не существует {issue.issue_key} +_+_+_+")
             return False
         else:
             logger.info(

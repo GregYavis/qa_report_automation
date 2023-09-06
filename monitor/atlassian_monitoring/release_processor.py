@@ -32,8 +32,8 @@ class ReleaseProcessor(AtlassianConfig):
 
     def get_feature_releases_info(self):
         issues_to_release = Issue.objects.filter(confluence_id__isnull=False,
-                                                          release_report=False,
-                                                          release_name__isnull=False)
+                                                 release_report=False,
+                                                 release_name__isnull=False)
         feature_releases = set(issue.release_name for issue in issues_to_release if
                                issue.issue_status in self.qa_states())
         info = {release_name: {
@@ -41,35 +41,10 @@ class ReleaseProcessor(AtlassianConfig):
                               'summary': issue.issue_summary,
                               'url': issue.jira_url}
             for issue in Issue.objects.filter(release_name=release_name)}
-                for release_name in feature_releases}
+            for release_name in feature_releases}
         return info
 
 
-    def qa_states(self):
-        return [e.value for e in self.issue_states if e not in [self.issue_states.RELEASED,
-                                                                self.issue_states.READY_FOR_QA,
-                                                                self.issue_states.OPEN,
-                                                                self.issue_states.REOPEN,
-                                                                self.issue_states.IN_DEVELOPMENT,
-                                                                self.issue_states.BLOCKED,
-                                                                self.issue_states.READY_FOR_REVIEW,
-                                                                self.issue_states.READY_FOR_TECHNICAL_SOLUTION_REVIEW,
-                                                                self.issue_states.READY_FOR_DEVELOPMENT,
-                                                                self.issue_states.TECHNICAL_SOLUTION,
-                                                                self.issue_states.IN_PROGRESS,
-                                                                self.issue_states.IN_QA]]
-
-    def ready_for_report_states(self):
-        return [e.value for e in self.issue_states if e not in [self.issue_states.READY_FOR_QA,
-                                                                self.issue_states.REOPEN,
-                                                                self.issue_states.IN_DEVELOPMENT,
-                                                                self.issue_states.BLOCKED,
-                                                                self.issue_states.READY_FOR_REVIEW,
-                                                                self.issue_states.READY_FOR_TECHNICAL_SOLUTION_REVIEW,
-                                                                self.issue_states.READY_FOR_DEVELOPMENT,
-                                                                self.issue_states.TECHNICAL_SOLUTION,
-                                                                self.issue_states.IN_PROGRESS,
-                                                                self.issue_states.IN_QA]]
 
     def release_ready_for_report(self, release_name: str):
         issues_in_release = Issue.objects.filter(release_name=release_name)
@@ -90,7 +65,8 @@ class ReleaseProcessor(AtlassianConfig):
         #
         # Найти все таски из релиза, если их нет в БД, добавить.
         issues = Issue.objects.filter(release_name=release_name)
-        logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Проверка актуальности атрибутов задач перед созданием отчета')
+        logger.info(
+            f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Проверка актуальности атрибутов задач перед созданием отчета')
         for issue in issues:
             jira_issue_summary = self.issue_summary(issue.issue_key)
             jira_release_name = self.release_name(issue.issue_key)
@@ -106,7 +82,7 @@ class ReleaseProcessor(AtlassianConfig):
                     title=self.confluence_title.format(issue.issue_key))
                 confluence_id = issue.confluence_id
                 issue.save()
-            #Проверить нет ли уже линка у задачи
+            # Проверить нет ли уже линка у задачи
             if not self.check_report_link_in_remote_links(issue=issue):
                 self.create_link(issue=issue)
             if jira_issue_summary != issue.issue_summary or \
@@ -119,7 +95,6 @@ class ReleaseProcessor(AtlassianConfig):
                                   release_name=jira_release_name,
                                   confluence_id=confluence_id)
         return
-
 
     def create_release_report(self):
         """
@@ -141,7 +116,8 @@ class ReleaseProcessor(AtlassianConfig):
 
         # Создаем шаблон релиза
         if not self.confluence.page_exists(space='AT', title=release_title):
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создание шаблона отчета для релиза {release_name}')
+            logger.info(
+                f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создание шаблона отчета для релиза {release_name}')
             self.confluence.create_page(space='AT',
                                         title=release_title,
                                         body=release_report_template(country=country),
@@ -151,13 +127,13 @@ class ReleaseProcessor(AtlassianConfig):
         release_issues = Issue.objects.filter(release_name=release_name)
         release_report_id = self.get_confluence_page_id(title=release_title)
         for issue in release_issues:
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Перенос отчета задачи {issue} в родительскую папку {release_title} с id {release_report_id}')
+            logger.info(
+                f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Перенос отчета задачи {issue} в родительскую папку {release_title} с id {release_report_id}')
             self.confluence.update_page(page_id=issue.confluence_id,
                                         title=self.confluence_title.format(issue.issue_key),
                                         parent_id=release_report_id)
             issue.release_report = True
             issue.save()
-
 
     def first_launch_get_issues(self):
         data = self.jira.jql(self.QA_QUERY)
@@ -182,7 +158,8 @@ class ReleaseProcessor(AtlassianConfig):
             issue = Issue.objects.get(issue_key=issue_key)
             # Проверяем есть ли у задачи прикрепленный линк с отчетом о тестировании, если нету, создаем.
             if not self.check_report_link_in_remote_links(issue=issue):
-                logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Прикрепляем ссылку на отчет о тестировании задачи {issue_key}.')
+                logger.info(
+                    f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Прикрепляем ссылку на отчет о тестировании задачи {issue_key}.')
                 self.create_link(issue=issue)
             processed_releases.append(self.release_name(issue_key))
             processed_releases[:] = set(processed_releases)
