@@ -48,9 +48,9 @@ class ReleaseProcessor(AtlassianConfig):
 
     def release_ready_for_report(self, release_name: str):
         issues_in_release = Issue.objects.filter(release_name=release_name)
-        logger.info(list(issues_in_release))
         ready_issues = Issue.objects.filter(release_name=release_name, issue_status__in=self.ready_for_report_states())
-        logger.info(list(ready_issues))
+        logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задачи в релизе {list(issues_in_release)}')
+        logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обрабатываемые задачи {list(ready_issues)}')
         return list(issues_in_release) == list(ready_issues)
 
     def monitor_issues_manual(self, release_name):

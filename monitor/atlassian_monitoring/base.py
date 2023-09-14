@@ -80,8 +80,7 @@ class AtlassianConfig:
                                                                 self.issue_states.READY_FOR_DEVELOPMENT,
                                                                 self.issue_states.TECHNICAL_SOLUTION,
                                                                 self.issue_states.IN_PROGRESS,
-                                                                self.issue_states.IN_QA,
-                                                                self.issue_states.IN_REGRESS_TEST_RC]]
+                                                                self.issue_states.IN_QA]]
 
     def ready_for_report_states(self):
         return [e.value for e in self.issue_states if e not in [self.issue_states.READY_FOR_QA,
@@ -93,8 +92,7 @@ class AtlassianConfig:
                                                                 self.issue_states.READY_FOR_DEVELOPMENT,
                                                                 self.issue_states.TECHNICAL_SOLUTION,
                                                                 self.issue_states.IN_PROGRESS,
-                                                                self.issue_states.IN_QA,
-                                                                self.issue_states.IN_REGRESS_TEST_RC]]
+                                                                self.issue_states.IN_QA]]
 
     def release_name(self, issue_key):
         try:
