@@ -19,6 +19,7 @@ class IssueStates(Enum):
     READY_FOR_QA = 'Ready for QA'
     PASSED_QA = 'Passed QA'
     IN_REGRESSION_TEST = 'In regression test'
+    IN_REGRESS_TEST_RC = 'In Regress Test RC'
     READY_FOR_RELEASE = 'Ready for release'
     RELEASED = 'Released to production'
     CLOSED = 'Closed'
@@ -79,7 +80,8 @@ class AtlassianConfig:
                                                                 self.issue_states.READY_FOR_DEVELOPMENT,
                                                                 self.issue_states.TECHNICAL_SOLUTION,
                                                                 self.issue_states.IN_PROGRESS,
-                                                                self.issue_states.IN_QA]]
+                                                                self.issue_states.IN_QA,
+                                                                self.issue_states.IN_REGRESS_TEST_RC]]
 
     def ready_for_report_states(self):
         return [e.value for e in self.issue_states if e not in [self.issue_states.READY_FOR_QA,
@@ -91,7 +93,8 @@ class AtlassianConfig:
                                                                 self.issue_states.READY_FOR_DEVELOPMENT,
                                                                 self.issue_states.TECHNICAL_SOLUTION,
                                                                 self.issue_states.IN_PROGRESS,
-                                                                self.issue_states.IN_QA]]
+                                                                self.issue_states.IN_QA,
+                                                                self.issue_states.IN_REGRESS_TEST_RC]]
 
     def release_name(self, issue_key):
         try:
