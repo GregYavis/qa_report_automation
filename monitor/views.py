@@ -24,7 +24,7 @@ class MainPage(View):
         issues_exists = Issue.objects.all().exists()
         context = {'releases': current_releases, 'has_issue': issues_exists}
         sorted_context = {key: value for key, value in context}
-        return render(self.request, 'main_page.html', context)
+        return render(self.request, 'main_page.html', sorted_context)
 
     def request_handler(self):
 
