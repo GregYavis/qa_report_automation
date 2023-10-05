@@ -97,7 +97,11 @@ class AtlassianConfig:
                                                                 self.issue_states.IN_PROGRESS,
                                                                 self.issue_states.IN_QA,
                                                                 self.issue_states.IN_INTEGRATION_TEST,
-                                                                self.issue_states.READY_FOR_RELEASE]]
+                                                                self.issue_states.READY_FOR_RELEASE,
+                                                                self.issue_states.FIXED,
+                                                                self.issue_states.FIXED_RU,
+                                                                self.issue_states.CLOSED,
+                                                                self.issue_states.CLOSED_RU]]
 
     def release_name(self, issue_key):
         try:
