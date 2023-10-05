@@ -36,14 +36,12 @@ class ReleaseProcessor(AtlassianConfig):
                                                  release_name__isnull=False)
         feature_releases = set(issue.release_name for issue in issues_to_release if
                                issue.issue_status in self.qa_states())
-        sorted_releases = {key: value for key, value in sorted(feature_releases.items())}
         info = {release_name: {
             issue.issue_key: {'status': issue.issue_status,
                               'summary': issue.issue_summary,
                               'url': issue.jira_url}
             for issue in Issue.objects.filter(release_name=release_name)}
-            for release_name in sorted_releases}
-
+            for release_name in feature_releases}
         return info
 
 
