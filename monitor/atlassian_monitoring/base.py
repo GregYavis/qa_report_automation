@@ -36,6 +36,7 @@ class IssueStates(Enum):
     READY_FOR_DEVELOPMENT = 'Ready for development'
     TECHNICAL_SOLUTION = 'Technical solution'
     IN_PROGRESS = 'In Progress'
+    IN_INTEGRATION_TEST = 'In integration test'
 
 
 class AtlassianConfig:
@@ -50,6 +51,7 @@ class AtlassianConfig:
                'or status = "Ready for release" ' \
                'or status = "Open" ' \
                'or status = "Ready for review" ' \
+               'or status = "In integration test" '\
                'or status = "Ready for technical solution review" ORDER BY priority DESC'
     ISSUES_BY_RELEASE = 'project = 4Slovo AND fixVersion = {}'
     confluence_viewpage = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId={}'
@@ -80,7 +82,8 @@ class AtlassianConfig:
                                                                 self.issue_states.READY_FOR_DEVELOPMENT,
                                                                 self.issue_states.TECHNICAL_SOLUTION,
                                                                 self.issue_states.IN_PROGRESS,
-                                                                self.issue_states.IN_QA]]
+                                                                self.issue_states.IN_QA,
+                                                                self.issue_states.IN_INTEGRATION_TEST]]
 
     def ready_for_report_states(self):
         return [e.value for e in self.issue_states if e not in [self.issue_states.READY_FOR_QA,
@@ -92,7 +95,8 @@ class AtlassianConfig:
                                                                 self.issue_states.READY_FOR_DEVELOPMENT,
                                                                 self.issue_states.TECHNICAL_SOLUTION,
                                                                 self.issue_states.IN_PROGRESS,
-                                                                self.issue_states.IN_QA]]
+                                                                self.issue_states.IN_QA,
+                                                                self.issue_states.IN_INTEGRATION_TEST]]
 
     def release_name(self, issue_key):
         try:
