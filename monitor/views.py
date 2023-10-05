@@ -22,7 +22,8 @@ class MainPage(View):
         # Запускать проверку текущих значений параметров таски
         current_releases = release_processor.get_feature_releases_info()
         issues_exists = Issue.objects.all().exists()
-        context = {key: value for key, value in {'releases': current_releases, 'has_issue': issues_exists}}
+        context = {'releases': current_releases, 'has_issue': issues_exists}
+        sorted_context = {key: value for key, value in context}
         return render(self.request, 'main_page.html', context)
 
     def request_handler(self):
