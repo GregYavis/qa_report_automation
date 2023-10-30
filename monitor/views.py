@@ -67,7 +67,7 @@ class MainPage(View):
                 logger.info(f'{monitor.issue_status in monitor.qa_states()}')
                 logger.info(f'{monitor.issue_ready_for_qa()}')
 
-                if not monitor.report_exists(monitor.issue_key) and monitor.issue_status in monitor.qa_states():
+                if not monitor.report_exists(monitor.issue_key) and monitor.issue_status(issue_key=monitor.issue_key) in monitor.qa_states():
                     monitor.create_report()
                 if monitor.issue_ready_for_qa():
                     monitor.create_report()
