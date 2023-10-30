@@ -65,7 +65,6 @@ class MainPage(View):
                 monitor.check_and_update_issue()
                 logger.info(f'{monitor.report_exists(monitor.issue_key)} EXISTENS')
                 logger.info(f'{monitor.issue_status in monitor.qa_states()}')
-                logger.info(f'{monitor.issue_status.value}')
                 logger.info(f'{monitor.issue_ready_for_qa()}')
 
                 if not monitor.report_exists(monitor.issue_key) and monitor.issue_status in monitor.qa_states():
