@@ -81,9 +81,8 @@ class AtlassianConfig:
                                                                 self.issue_states.READY_FOR_TECHNICAL_SOLUTION_REVIEW,
                                                                 self.issue_states.READY_FOR_DEVELOPMENT,
                                                                 self.issue_states.TECHNICAL_SOLUTION,
-                                                                self.issue_states.IN_PROGRESS,
-                                                                self.issue_states.IN_QA,
-                                                                self.issue_states.IN_INTEGRATION_TEST]]
+                                                                self.issue_states.IN_PROGRESS
+                                                                ]]
 
     def ready_for_report_states(self):
         return [e.value for e in self.issue_states if e not in [self.issue_states.READY_FOR_QA,
