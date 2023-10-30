@@ -109,6 +109,7 @@ class AtlassianConfig:
 
     def issue_status(self, issue_key):
         try:
+            logger.info(f'{self.jira.issue_field_value(key=issue_key, field="status")["name"]}')
             return self.jira.issue_field_value(key=issue_key, field='status')['name']
         except HTTPError:
             logger.info(
