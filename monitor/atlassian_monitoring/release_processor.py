@@ -83,8 +83,11 @@ class ReleaseProcessor(AtlassianConfig):
                 confluence_id = issue.confluence_id
                 issue.save()
             # Проверить нет ли уже линка у задачи
-            if not self.check_report_link_in_remote_links(issue=issue):
-                self.create_link(issue=issue)
+            try:
+                if not self.check_report_link_in_remote_links(issue=issue):
+                    self.create_link(issue=issue)
+            except Exception:
+                logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} *_*_* запрос на проверку линков к задаче {issue} не действителен')
             if jira_issue_summary != issue.issue_summary or \
                     jira_release_name != issue.release_name or \
                     jira_issue_status != issue.issue_status or \
