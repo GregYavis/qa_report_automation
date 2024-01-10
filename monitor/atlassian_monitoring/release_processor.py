@@ -87,7 +87,8 @@ class ReleaseProcessor(AtlassianConfig):
                 if not self.check_report_link_in_remote_links(issue=issue):
                     self.create_link(issue=issue)
             except Exception:
-                logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} *_*_* запрос на проверку линков к задаче {issue} не действителен')
+                logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} *_*_* запрос на проверку линков к задаче {issue} не возможен, задача удалена или скрыта')
+                continue
             if jira_issue_summary != issue.issue_summary or \
                     jira_release_name != issue.release_name or \
                     jira_issue_status != issue.issue_status or \
