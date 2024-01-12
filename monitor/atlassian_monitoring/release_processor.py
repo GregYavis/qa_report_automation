@@ -51,6 +51,8 @@ class ReleaseProcessor(AtlassianConfig):
         ready_issues = Issue.objects.filter(release_name=release_name, issue_status__in=self.ready_for_report_states())
         logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задачи в релизе {list(issues_in_release)}')
         logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обрабатываемые задачи {list(ready_issues)}')
+        if list(issues_in_release) != list(ready_issues):
+            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задачи по которым не сходится список к отчету и фактический {set(issues_in_release).difference(set(ready_issues))}')
         return list(issues_in_release) == list(ready_issues)
 
     def monitor_issues_manual(self, release_name):
