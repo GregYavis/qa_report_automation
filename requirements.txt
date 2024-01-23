@@ -1,5 +1,5 @@
 asgiref==3.3.4
-atlassian-python-api==3.10.0
+atlassian-python-api==3.41.9
 certifi==2021.5.30
 chardet==4.0.0
 Deprecated==1.2.12
