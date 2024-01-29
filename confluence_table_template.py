@@ -78,32 +78,28 @@ def release_report_template(country):
         checklist_link = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId=40370935'
     elif country == 'ge':
         checklist_link = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId=47383257'
-    template = '<p class="auto-cursor-target">' \
-               f'<a href="{checklist_link}">Чеклист тестирования релиза {country}</a>' \
-               '</p>' \
-               '<table border="1" class="confluenceTable">' \
-               '<colgroup><col></col><col></col><col></col></colgroup>' \
-               '<tbody>' \
-               '<tr>' \
-               '<th class="confluenceTh"><br></br></th><th class="confluenceTh">RC Исполнитель, дата</th>' \
-               '<th colspan="1" class="confluenceTh">Staging <span>Исполнитель, дата</span></th>' \
-               '</tr>' \
-               '<tr>' \
-               '<td class="confluenceTd"><h2>Регресс десктопной версии</h2></td><td class="confluenceTd">' \
-               '<div class="content-wrapper"></div></td><td colspan="1" class="confluenceTd"><br></br>' \
-               '</td>' \
-               '</tr>' \
-               '<tr>' \
-               '<td class="confluenceTd"><h2><span>Регресс мобильной версии</span></h2></td>' \
-               '<td class="confluenceTd"><br></br></td><td colspan="1" class="confluenceTd"><br></br>' \
-               '</td>' \
-               '</tr>' \
-               '<tr>' \
-               '<td class="confluenceTd"><h2>Исследовательское тестирование</h2></td>' \
-               '<td class="confluenceTd"><br></br></td><td colspan="1" class="confluenceTd">' \
-               '<br></br>' \
-               '</td>' \
-               '</tr>' \
-               '</tbody>' \
-               '</table>'
+    template = (f'<table class="wrapped confluenceTable stickyTableHeaders tablesorter tablesorter-default" resolved="" style="padding: 0px;" role="grid">'
+                f'<thead class="tableFloatingHeaderOriginal">'
+                f'<tr role="row" class="tablesorter-headerRow">'
+                f'<th class="confluenceTh tablesorter-header sortableHeader tablesorter-headerUnSorted" data-column="0" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" aria-sort="none" aria-label=": No sort applied, activate to apply an ascending sort" style="user-select: none;">'
+                f'<div class="tablesorter-header-inner"><br>'
+                f'</div></th><th class="confluenceTh tablesorter-header sortableHeader tablesorter-headerUnSorted" data-column="1" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" aria-sort="none" aria-label="RC исполнитель, дата(моб. можно в эмуляторе): No sort applied, activate to apply an ascending sort" style="user-select: none;">'
+                f'<div class="tablesorter-header-inner">RC исполнитель, дата<h6>(моб. можно в эмуляторе)</h6>'
+                f'</div></th><th class="confluenceTh tablesorter-header sortableHeader tablesorter-headerUnSorted" data-column="2" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" aria-sort="none" aria-label="Staging исполнитель, дата: No sort applied, activate to apply an ascending sort" style="user-select: none;">'
+                f'<div class="tablesorter-header-inner">Staging исполнитель, дата'
+                f'</div></th></tr></thead>'
+                f'<thead class="tableFloatingHeader" style="display: none;">'
+                f'<tr role="row" class="tablesorter-headerRow"><th class="confluenceTh tablesorter-header sortableHeader tablesorter-headerUnSorted" data-column="0" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" aria-sort="none" aria-label=": No sort applied, activate to apply an ascending sort" style="user-select: none;">'
+                f'<div class="tablesorter-header-inner"><br></div></th><th class="confluenceTh tablesorter-header sortableHeader tablesorter-headerUnSorted" data-column="1" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" aria-sort="none" aria-label="RC исполнитель, дата(моб. можно в эмуляторе): No sort applied, activate to apply an ascending sort" style="user-select: none;">'
+                f'<div class="tablesorter-header-inner">RC исполнитель, дата<h6>(моб. можно в эмуляторе)'
+                f'</h6></div></th><th class="confluenceTh tablesorter-header sortableHeader tablesorter-headerUnSorted" data-column="2" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" aria-sort="none" aria-label="Staging исполнитель, дата: No sort applied, activate to apply an ascending sort" style="user-select: none;"><div class="tablesorter-header-inner">Staging исполнитель, дата'
+                f'</div></th></tr></thead><colgroup><col><col><col></colgroup><tbody aria-live="polite" aria-relevant="all">'
+                f'<tr role="row">'
+                f'<td class="confluenceTd">'
+                f'<h2>Проверка деплой лога</h2></td><td class="highlight-grey confluenceTd" title="Background color : " data-highlight-colour="grey">'
+                f'<br></td><td class="confluenceTd"><br></td></tr><tr role="row"><td class="confluenceTd"><h2>Проверка логов до и&nbsp;после релиза</h2><h2>на наличие Warning, Error</h2></td><td class="highlight-grey confluenceTd" title="Background color : " data-highlight-colour="grey">'
+                f'<br></td><td class="confluenceTd"><br></td></tr><tr role="row"><td class="confluenceTd"><h2>Регресс десктопной версии</h2></td><td class="confluenceTd">'
+                f'<br></td><td class="confluenceTd"><br></td></tr><tr role="row"><td class="confluenceTd"><h2>Регресс мобильной версии</h2></td><td class="confluenceTd">'
+                f'<br></td><td class="confluenceTd"><br></td></tr><tr role="row"><td class="confluenceTd"><h2>Исследовательское тестирование</h2></td><td class="confluenceTd">'
+                f'<br></td><td class="confluenceTd"><br></td></tr></tbody></table>')
     return template
