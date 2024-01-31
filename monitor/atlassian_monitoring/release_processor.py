@@ -41,7 +41,7 @@ class ReleaseProcessor(AtlassianConfig):
                               'summary': issue.issue_summary,
                               'url': issue.jira_url}
             for issue in Issue.objects.filter(release_name=release_name)}
-            for release_name in feature_releases if "backlog" not in release_name.release_key}
+            for release_name in feature_releases if "backlog" not in release_name.release_key or release_name.release_key != 'None'}
         return info
 
     def release_ready_for_report(self, release_name: str):
