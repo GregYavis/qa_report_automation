@@ -200,6 +200,7 @@ class AtlassianConfig:
     def report_exists(self, issue_key):
         return self.confluence.page_exists(space="AT", title=self.confluence_title.format(issue_key))
 
+
     def _check_release_exist_and_save(self, release_name):
         if not Release.objects.filter(release_key=release_name) and release_name is not None:
             Release.objects.create(release_key=release_name)

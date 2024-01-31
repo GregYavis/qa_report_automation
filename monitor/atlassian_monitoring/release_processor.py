@@ -162,7 +162,12 @@ class ReleaseProcessor(AtlassianConfig):
 
             if not self.confluence.page_exists(space='AT', title=self.confluence_title.format(issue_key)):
                 self.create_template(issue_key)
-
+            release_name = self.request['issue']['fields']['fixVersions']
+            if release_name:
+                release_name = release_name[0]['name']
+            else:
+                release_name = None
+            self._check_release_exist_and_save(release_name=release_name)
             if not Issue.objects.filter(issue_key=issue_key):
                 self.create_issue(issue_key=issue_key)
 
