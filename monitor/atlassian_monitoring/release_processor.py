@@ -169,7 +169,6 @@ class ReleaseProcessor(AtlassianConfig):
                     release_name = release_name[0]['name']
                 else:
                     release_name = None
-                self._check_release_exist_and_save(release_name=release_name)
                 if not Issue.objects.filter(issue_key=issue_key):
                     self.create_issue(issue_key=issue_key)
 
