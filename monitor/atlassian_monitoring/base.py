@@ -52,7 +52,7 @@ class AtlassianConfig:
                'or status = "Ready for release" ' \
                'or status = "Open" ' \
                'or status = "Ready for review" ' \
-               'or status = "In integration test" ' \
+               'or status = "In integration test" or status = "In development" ' \
                'or status = "Ready for technical solution review" ORDER BY priority DESC'
     ISSUES_BY_RELEASE = 'project = 4Slovo AND fixVersion = {}'
     confluence_viewpage = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId={}'

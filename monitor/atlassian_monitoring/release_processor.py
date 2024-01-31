@@ -148,6 +148,8 @@ class ReleaseProcessor(AtlassianConfig):
 
     def first_launch_get_issues(self):
         data = self.jira.jql(self.QA_QUERY)
+        with open('file.txt', 'w') as wr:
+            wr.write(data)
         processed_releases = []
         for issue in data["issues"]:
             print(issue)
