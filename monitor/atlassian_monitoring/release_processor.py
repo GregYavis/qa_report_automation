@@ -149,7 +149,6 @@ class ReleaseProcessor(AtlassianConfig):
     def first_launch_get_issues(self):
         data_chunks = [self.jira.jql(self.QA_QUERY_RU), self.jira.jql(self.QA_QUERY_KZ),
                        self.jira.jql(self.QA_QUERY_DA), self.jira.jql(self.QA_QUERY_GE)]
-        logger.info(data_chunks)
         processed_releases = []
         for data in data_chunks:
             for issue in data["issues"]:
