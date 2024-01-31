@@ -50,7 +50,7 @@ class AtlassianConfig:
                    '("Ready for QA", "Passed QA", "In regression test", "Ready for release", "Open", "Ready for review",'
                    ' "In integration test", "In development", "Ready for technical solution review") '
                    'ORDER BY priority DESC')
-    QA_QUERY_RU = ('project = 4Slovo AND fixVersion ~ "ru.*" AND status in '
+    QA_QUERY_RU = ('project = 4Slovo AND fixVersion > ru.6.14.6  AND status in '
                    '("Ready for QA", "Passed QA", "In regression test", "Ready for release", "Open", "Ready for review",'
                    ' "In integration test", "In development", "Ready for technical solution review") '
                    'ORDER BY priority DESC')
