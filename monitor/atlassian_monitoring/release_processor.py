@@ -150,7 +150,7 @@ class ReleaseProcessor(AtlassianConfig):
         data = self.jira.jql(self.QA_QUERY)
         processed_releases = []
         for issue in data["issues"]:
-
+            print(issue)
             issue_key = issue['key']
             logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {issue_key} proceed thru first_launch method.')
             try:
@@ -162,7 +162,7 @@ class ReleaseProcessor(AtlassianConfig):
 
             if not self.confluence.page_exists(space='AT', title=self.confluence_title.format(issue_key)):
                 self.create_template(issue_key)
-            release_name = self.request['issue']['fields']['fixVersions']
+            release_name = issue['fields']['fixVersions']
             if release_name:
                 release_name = release_name[0]['name']
             else:
