@@ -41,7 +41,8 @@ class ReleaseProcessor(AtlassianConfig):
                               'summary': issue.issue_summary,
                               'url': issue.jira_url}
             for issue in Issue.objects.filter(release_name=release_name)}
-            for release_name in feature_releases if "backlog" not in release_name.release_key and release_name.release_key != 'None'}
+            for release_name in feature_releases if
+            "backlog" not in release_name.release_key and release_name.release_key != 'None'}
         return info
 
     def release_ready_for_report(self, release_name: str):
@@ -145,42 +146,42 @@ class ReleaseProcessor(AtlassianConfig):
             issue.release_report = True
             issue.save()
 
-
     def first_launch_get_issues(self):
-        data = self.jira.jql(self.QA_QUERY)
-        with open('file.txt', 'w') as wr:
-            wr.write(data)
+        data_chunks = [self.jira.jql(self.QA_QUERY_RU), self.jira.jql(self.QA_QUERY_KZ),
+                       self.jira.jql(self.QA_QUERY_DA), self.jira.jql(self.QA_QUERY_GE)]
+        logger.info(data_chunks)
         processed_releases = []
-        for issue in data["issues"]:
-            print(issue)
-            issue_key = issue['key']
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {issue_key} proceed thru first_launch method.')
-            try:
-                # Для сборок не создаем таких же отчетов как для тасок
-                if self.jira.issue_field_value(key=issue_key, field='issuetype')['name'] == 'RC':
-                    continue
-            except TypeError:
-                pass
-
-            if not self.confluence.page_exists(space='AT', title=self.confluence_title.format(issue_key)):
-                self.create_template(issue_key)
-            release_name = issue['fields']['fixVersions']
-            if release_name:
-                release_name = release_name[0]['name']
-            else:
-                release_name = None
-            self._check_release_exist_and_save(release_name=release_name)
-            if not Issue.objects.filter(issue_key=issue_key):
-                self.create_issue(issue_key=issue_key)
-
-            issue = Issue.objects.get(issue_key=issue_key)
-            # Проверяем есть ли у задачи прикрепленный линк с отчетом о тестировании, если нету, создаем.
-            if not self.check_report_link_in_remote_links(issue=issue):
+        for data in data_chunks:
+            for issue in data["issues"]:
+                issue_key = issue['key']
                 logger.info(
-                    f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Прикрепляем ссылку на отчет о тестировании задачи {issue_key}.')
-                self.create_link(issue=issue)
-            processed_releases.append(self.release_name(issue_key))
-            processed_releases[:] = set(processed_releases)
+                    f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {issue_key} proceed thru first_launch method.')
+                try:
+                    # Для сборок не создаем таких же отчетов как для тасок
+                    if self.jira.issue_field_value(key=issue_key, field='issuetype')['name'] == 'RC':
+                        continue
+                except TypeError:
+                    pass
+
+                if not self.confluence.page_exists(space='AT', title=self.confluence_title.format(issue_key)):
+                    self.create_template(issue_key)
+                release_name = issue['fields']['fixVersions']
+                if release_name:
+                    release_name = release_name[0]['name']
+                else:
+                    release_name = None
+                self._check_release_exist_and_save(release_name=release_name)
+                if not Issue.objects.filter(issue_key=issue_key):
+                    self.create_issue(issue_key=issue_key)
+
+                issue = Issue.objects.get(issue_key=issue_key)
+                # Проверяем есть ли у задачи прикрепленный линк с отчетом о тестировании, если нету, создаем.
+                if not self.check_report_link_in_remote_links(issue=issue):
+                    logger.info(
+                        f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Прикрепляем ссылку на отчет о тестировании задачи {issue_key}.')
+                    self.create_link(issue=issue)
+                processed_releases.append(self.release_name(issue_key))
+                processed_releases[:] = set(processed_releases)
         # Дополнительно подтягиваем данные о всех задачах по затронутым релизам
         for release in processed_releases:
             if release is not None:
@@ -195,3 +196,4 @@ class ReleaseProcessor(AtlassianConfig):
                         pass
                     if not Issue.objects.filter(issue_key=_issue_key):
                         self.create_issue(issue_key=_issue_key)
+        return
