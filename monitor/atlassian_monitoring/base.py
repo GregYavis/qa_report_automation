@@ -4,10 +4,11 @@ import os
 from datetime import datetime
 from enum import Enum
 
+from django import db
 from requests import HTTPError
 
 from confluence_table_template import issue_report_template
-from monitor.models import Issue
+from monitor.models import Issue, Release
 from atlassian import Confluence
 from atlassian import Jira
 from nested_lookup import nested_lookup
@@ -51,7 +52,7 @@ class AtlassianConfig:
                'or status = "Ready for release" ' \
                'or status = "Open" ' \
                'or status = "Ready for review" ' \
-               'or status = "In integration test" '\
+               'or status = "In integration test" ' \
                'or status = "Ready for technical solution review" ORDER BY priority DESC'
     ISSUES_BY_RELEASE = 'project = 4Slovo AND fixVersion = {}'
     confluence_viewpage = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId={}'
@@ -176,7 +177,7 @@ class AtlassianConfig:
             return True
         elif (self.confluence_viewpage.format(
                 str(issue.confluence_id)) not in urls) and not self.get_confluence_page_id(
-                title=self.confluence_title.format(issue.issue_key)):
+            title=self.confluence_title.format(issue.issue_key)):
             logger.info(
                 f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк не существует {issue.issue_key} +_+_+_+")
             return False
@@ -187,23 +188,37 @@ class AtlassianConfig:
             issue.save()
             return False
 
-    @staticmethod
-    def update_issue(issue_key, issue_summary, issue_status, release_name, confluence_id):
+    def update_issue(self, issue_key, issue_summary, issue_status, release_name, confluence_id):
+        release = self._check_release_exist_and_save(release_name=release_name)
         issue = Issue.objects.get(issue_key=issue_key)
         issue.issue_summary = issue_summary
         issue.issue_status = issue_status
-        issue.release_name = release_name
+        issue.release_name = release
         issue.confluence_id = confluence_id
         issue.save()
 
     def report_exists(self, issue_key):
         return self.confluence.page_exists(space="AT", title=self.confluence_title.format(issue_key))
 
+    def _check_release_exist_and_save(self, release_name):
+        if not Release.objects.filter(release_key=release_name) and release_name is not None:
+            Release.objects.create(release_key=release_name)
+        elif release_name is None:
+            release_name = 'empty'
+            if not Release.objects.filter(release_key=release_name):
+                Release.objects.create(release_key=release_name)
+        # Критерии готовности - уже есть отчет + все задачи имеют определенный статус + все задачи имеют отчет
+        # Получить чекбоксы всех тасок релиза
+        # Проверить сущестоввание страницы с отетом по релизу (ввести еще поле с id страницы cofluecne??)
+        # Проверить
+        return Release.objects.get(release_key=release_name)
+
     def save_issue(self, issue_key, issue_summary, release_name, issue_status):
+        release = self._check_release_exist_and_save(release_name=release_name)
         Issue.objects.create(issue_key=issue_key,
                              jira_url=''.join([self.JIRA_BASE_URL, "browse/", issue_key]),
                              issue_summary=issue_summary,
                              issue_status=issue_status,
-                             release_name=release_name,
+                             release_name=release,
                              confluence_id=self.get_confluence_page_id(
                                  title=self.confluence_title.format(issue_key)))

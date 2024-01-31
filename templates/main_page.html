@@ -27,7 +27,7 @@
         <p style="margin-top: 20px; margin-bottom: 20px">
         <form action="{% url 'monitor:main-page' %}" method="POST">
             <a>{{ release_name }}</a>
-            <button type="submit" class="btn btn-outline-primary btn-sm" name="release_name" value="{{ release_name }}">
+            <button type="submit" class="btn btn-outline-primary btn-sm" name="release_name" value="{{ release_name.id }}">
                 Generate release report
             </button>
         </form>

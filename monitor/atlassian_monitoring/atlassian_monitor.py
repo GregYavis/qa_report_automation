@@ -5,7 +5,7 @@ from datetime import datetime
 from django.db import IntegrityError
 
 from confluence_table_template import issue_report_template
-from monitor.models import Issue
+from monitor.models import Issue, Release
 from .base import AtlassianConfig
 from .. import models
 

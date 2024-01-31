@@ -3,7 +3,7 @@ from datetime import datetime
 from time import sleep
 
 from monitor.atlassian_monitoring.base import AtlassianConfig
-from monitor.models import Issue
+from monitor.models import Issue, Release
 from confluence_table_template import release_report_template, issue_report_template
 
 logging.basicConfig(filename='cron.log')
@@ -55,7 +55,7 @@ class ReleaseProcessor(AtlassianConfig):
             logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задачи по которым не сходится список к отчету и фактический {set(issues_in_release).difference(set(ready_issues))}')
         return list(issues_in_release) == list(ready_issues)
 
-    def monitor_issues_manual(self, release_name):
+    def monitor_issues_manual(self, release_name, first: bool):
 
         """
         При нажатии кнопки проверяем атрибуты задач на актуальность, на тот случай
@@ -63,7 +63,8 @@ class ReleaseProcessor(AtlassianConfig):
         и при условии отличия актуальных и ранее сохраненных атрибутов обновляем их
         """
         # Что бы задачи не пролетали мимо бота в случае если перешли в тестирование во время когда он был не доступен
-        self.first_launch_get_issues()
+        if first:
+            self.first_launch_get_issues()
         #
         # Найти все таски из релиза, если их нет в БД, добавить.
         issues = Issue.objects.filter(release_name=release_name)
@@ -110,9 +111,10 @@ class ReleaseProcessor(AtlassianConfig):
         release_parent_id = id созданной страницы релиза
         Все задачи относящиеся к данному релизу, переносим в папку релиза - меняется partner_id
         """
-        release_name = self.request.POST.get('release_name')
+        release_name = Release.objects.get(id=self.request.POST.get('release_name'))
         logger.info(f'{release_name}')
-        country = release_name.split('.')[0]
+        country = str(release_name).split('.')[0]
+
         year_title = self.year_releases.format(datetime.now().year)
         if not self.confluence.page_exists(space="AT", title=year_title):
             self.confluence.create_page(space='AT', title=year_title, parent_id=self.qa_reports_page_id)
@@ -128,7 +130,8 @@ class ReleaseProcessor(AtlassianConfig):
                                         title=release_title,
                                         body=release_report_template(country=country),
                                         parent_id=year_id)
-
+        release_name.is_released = True
+        release_name.save()
         # Далее получаем таски релиза release_name
         release_issues = Issue.objects.filter(release_name=release_name)
         release_report_id = self.get_confluence_page_id(title=release_title)
