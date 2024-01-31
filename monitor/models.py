@@ -5,7 +5,7 @@ from django.shortcuts import reverse
 # Create your models here.
 
 class Release(models.Model):
-    release_key = models.CharField(max_length=56, blank=True, null=True, unique=True, default='')
+    release_key = models.CharField(max_length=56, blank=True, null=True, unique=True, default='None')
     is_released = models.BooleanField(default=False)
 
     def __str__(self):
