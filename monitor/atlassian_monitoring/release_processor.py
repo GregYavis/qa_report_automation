@@ -44,18 +44,17 @@ class ReleaseProcessor(AtlassianConfig):
             for release_name in feature_releases}
         return info
 
-
-
     def release_ready_for_report(self, release_name: str):
         issues_in_release = Issue.objects.filter(release_name=release_name)
         ready_issues = Issue.objects.filter(release_name=release_name, issue_status__in=self.ready_for_report_states())
         logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задачи в релизе {list(issues_in_release)}')
         logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обрабатываемые задачи {list(ready_issues)}')
         if list(issues_in_release) != list(ready_issues):
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задачи по которым не сходится список к отчету и фактический {set(issues_in_release).difference(set(ready_issues))}')
+            logger.info(
+                f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задачи по которым не сходится список к отчету и фактический {set(issues_in_release).difference(set(ready_issues))}')
         return list(issues_in_release) == list(ready_issues)
 
-    def monitor_issues_manual(self, release_name, first: bool):
+    def monitor_issues_manual(self, release_name, first: bool = True):
 
         """
         При нажатии кнопки проверяем атрибуты задач на актуальность, на тот случай
@@ -80,7 +79,8 @@ class ReleaseProcessor(AtlassianConfig):
                                                               title=self.confluence_title.format(issue.issue_key),
                                                               body=issue_report_template(issue.issue_key),
                                                               parent_id=self.qa_reports_page_id)
-                logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} ***** {issue_conf_info} *****")
+                logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} Создание отчета о тетировании задачи "
+                            f"{issue.issue_key} {issue_conf_info}")
                 issue.confluence_id = self.get_confluence_page_id(
                     title=self.confluence_title.format(issue.issue_key))
                 confluence_id = issue.confluence_id
@@ -90,16 +90,18 @@ class ReleaseProcessor(AtlassianConfig):
                 if not self.check_report_link_in_remote_links(issue=issue):
                     self.create_link(issue=issue)
             except Exception:
-                logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} *_*_* запрос на проверку линков к задаче {issue} не возможен, задача удалена или скрыта')
+                logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Запрос на проверку линков к задаче '
+                            f'{issue} не возможен, задача удалена или скрыта')
                 continue
             if jira_issue_summary != issue.issue_summary or \
                     jira_release_name != issue.release_name or \
                     jira_issue_status != issue.issue_status or \
                     confluence_id != issue.confluence_id:
+                release = self._check_release_exist_and_save(release_name=jira_release_name)
                 self.update_issue(issue_key=issue.issue_key,
                                   issue_summary=jira_issue_summary,
                                   issue_status=jira_issue_status,
-                                  release_name=jira_release_name,
+                                  release_name=release,
                                   confluence_id=confluence_id)
         return
 
@@ -143,6 +145,7 @@ class ReleaseProcessor(AtlassianConfig):
                                         parent_id=release_report_id)
             issue.release_report = True
             issue.save()
+
 
     def first_launch_get_issues(self):
         data = self.jira.jql(self.QA_QUERY)

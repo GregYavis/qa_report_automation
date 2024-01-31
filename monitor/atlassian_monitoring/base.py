@@ -160,30 +160,30 @@ class AtlassianConfig:
     def check_report_link_in_remote_links(self, issue):
         # Проверяем ссылки на отчет о тестировании
         logger.info(
-            f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}  +_+_+_+ Проверка существования линка к задаче {issue.issue_key} +_+_+_+")
-        logger.info(f'EXPEXT {self.confluence_viewpage.format(str(issue.confluence_id))}')
+            f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} Проверка существования линка "
+            f"{self.confluence_viewpage.format(str(issue.confluence_id))} к задаче {issue.issue_key}")
 
         links = self.jira.get_issue_remote_links(issue_key=issue.issue_key)
         urls = [nested_lookup(key='url', document=link)[0] for link in links]
-        logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+{links}")
-        logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+{urls}")
+        logger.info(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} Прикреаленные к задаче линки {urls}")
         duplicate_urls = [data['object']['url'] for data in links]
         if urls.count(self.confluence_viewpage.format(str(issue.confluence_id))) > 1:
             logger.info(f':::::::::::::::::https://jira.4slovo.ru/browse/{issue.issue_key}:::::::::::::::::')
         if (self.confluence_viewpage.format(str(issue.confluence_id)) in urls) or \
                 (self.confluence_viewpage.format(str(issue.confluence_id)) in duplicate_urls):
             logger.info(
-                f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк существует {issue.issue_key} +_+_+_+")
+                f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} Линк существует {issue.issue_key} ")
             return True
         elif (self.confluence_viewpage.format(
                 str(issue.confluence_id)) not in urls) and not self.get_confluence_page_id(
             title=self.confluence_title.format(issue.issue_key)):
             logger.info(
-                f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Линк не существует {issue.issue_key} +_+_+_+")
+                f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} Линк не существует {issue.issue_key} ")
             return False
         else:
             logger.info(
-                f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} +_+_+_+ Статья существует, линк тоже но по какой-то причине не отрабатывается провверкой {issue.issue_key} +_+_+_+")
+                f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} "
+                f"Статья существует, линк тоже но по какой-то причине не отрабатывается провверкой {issue.issue_key}")
             issue.confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
             issue.save()
             return False
@@ -204,7 +204,7 @@ class AtlassianConfig:
         if not Release.objects.filter(release_key=release_name) and release_name is not None:
             Release.objects.create(release_key=release_name)
         elif release_name is None:
-            release_name = 'empty'
+            release_name = str(release_name)
             if not Release.objects.filter(release_key=release_name):
                 Release.objects.create(release_key=release_name)
         # Критерии готовности - уже есть отчет + все задачи имеют определенный статус + все задачи имеют отчет
