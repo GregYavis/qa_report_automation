@@ -49,19 +49,19 @@ class AtlassianConfig:
     QA_QUERY_DA = ('project = 4Slovo AND fixVersion ~ "7da.*" AND status in '
                    '("Ready for QA", "Passed QA", "In regression test", "Ready for release", "Open", "Ready for review",'
                    ' "In integration test", "In development", "Ready for technical solution review") '
-                   'ORDER BY priority DESC&maxResults=1000')
+                   'ORDER BY priority DESC')
     QA_QUERY_RU = ('project = 4Slovo AND fixVersion ~ "ru.*" AND status in '
                    '("Ready for QA", "Passed QA", "In regression test", "Ready for release", "Open", "Ready for review",'
                    ' "In integration test", "In development", "Ready for technical solution review") '
-                   'ORDER BY priority DESC&maxResults=1000')
+                   'ORDER BY priority DESC')
     QA_QUERY_GE = ('project = 4Slovo AND fixVersion ~ "ge.*" AND status in '
                    '("Ready for QA", "Passed QA", "In regression test", "Ready for release", "Open", "Ready for review",'
                    ' "In integration test", "In development", "Ready for technical solution review")'
-                   ' ORDER BY priority DESC&maxResults=1000')
+                   ' ORDER BY priority DESC')
     QA_QUERY_KZ = ('project = 4Slovo AND fixVersion ~ "kz.*" AND status in '
                    '("Ready for QA", "Passed QA", "In regression test", "Ready for release", "Open", "Ready for review",'
                    ' "In integration test", "In development", "Ready for technical solution review")'
-                   ' ORDER BY priority DESC&maxResults=1000')
+                   ' ORDER BY priority DESC')
     ISSUES_BY_RELEASE = 'project = 4Slovo AND fixVersion = {}'
     confluence_viewpage = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId={}'
 

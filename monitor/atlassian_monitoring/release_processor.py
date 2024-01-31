@@ -147,8 +147,8 @@ class ReleaseProcessor(AtlassianConfig):
             issue.save()
 
     def first_launch_get_issues(self):
-        data_chunks = [self.jira.jql(self.QA_QUERY_RU), self.jira.jql(self.QA_QUERY_KZ),
-                       self.jira.jql(self.QA_QUERY_DA), self.jira.jql(self.QA_QUERY_GE)]
+        data_chunks = [self.jira.jql(self.QA_QUERY_RU, limit=1000), self.jira.jql(self.QA_QUERY_KZ, limit=1000),
+                       self.jira.jql(self.QA_QUERY_DA, limit=1000), self.jira.jql(self.QA_QUERY_GE, limit=1000)]
         processed_releases = []
         for data in data_chunks:
             for issue in data["issues"]:
