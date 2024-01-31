@@ -54,7 +54,7 @@ class ReleaseProcessor(AtlassianConfig):
                 f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задачи по которым не сходится список к отчету и фактический {set(issues_in_release).difference(set(ready_issues))}')
         return list(issues_in_release) == list(ready_issues)
 
-    def monitor_issues_manual(self, release_name, first: bool = True):
+    def monitor_issues_manual(self, release_name):
 
         """
         При нажатии кнопки проверяем атрибуты задач на актуальность, на тот случай
@@ -62,8 +62,7 @@ class ReleaseProcessor(AtlassianConfig):
         и при условии отличия актуальных и ранее сохраненных атрибутов обновляем их
         """
         # Что бы задачи не пролетали мимо бота в случае если перешли в тестирование во время когда он был не доступен
-        if first:
-            self.first_launch_get_issues()
+        self.first_launch_get_issues()
         #
         # Найти все таски из релиза, если их нет в БД, добавить.
         issues = Issue.objects.filter(release_name=release_name)

@@ -46,7 +46,7 @@ class MainPage(View):
         if self.request.POST.get('release_name'):
             release_processor = ReleaseProcessor(self.request)
             release_name = self.request.POST.get('release_name')
-            release_processor.monitor_issues_manual(release_name, first=False)
+            release_processor.monitor_issues_manual(release_name)
             # Проверяем что все таски из релиза в статусе ready for release
             if release_processor.release_ready_for_report(release_name):
                 # Перекладываем таски относящиеся к релизу в иерархию ГОД > РЕЛИЗ > ЗАДАЧИ
