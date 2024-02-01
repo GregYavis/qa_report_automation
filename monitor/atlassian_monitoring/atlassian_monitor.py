@@ -58,7 +58,7 @@ class AtlassianMonitor(AtlassianConfig):
                                   self.jira_release_name,
                                   confluence_id)
 
-        except models.Issue.DoesNotExist or Exception:
+        except Exception:
             logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создание записи для обновленной задачи еще не представленной в БД')
             try:
                 logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создана задача {self.issue_key}. Запись в БД')
