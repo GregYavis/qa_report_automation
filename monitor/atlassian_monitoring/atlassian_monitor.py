@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import datetime
 
+import atlassian
 from django.db import IntegrityError
 
 from confluence_table_template import issue_report_template
@@ -57,7 +58,7 @@ class AtlassianMonitor(AtlassianConfig):
                                   self.jira_release_name,
                                   confluence_id)
 
-        except models.Issue.DoesNotExist:
+        except models.Issue.DoesNotExist or Exception:
             logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создание записи для обновленной задачи еще не представленной в БД')
             try:
                 logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создана задача {self.issue_key}. Запись в БД')
