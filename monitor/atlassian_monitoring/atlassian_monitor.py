@@ -53,12 +53,10 @@ class AtlassianMonitor(AtlassianConfig):
                 issue.release_report = False
                 logger.info(
                     f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {issue.issue_key} Сюда проваливается {self.jira_release_name} {str(issue.release_name)} {type(issue.release_name)}')
-
                 issue.release_name = self._get_release(release_name=self.jira_release_name)
                 issue.save()
             if self.jira_issue_summary != issue.issue_summary or \
-                    self.jira_issue_status != issue.issue_status or \
-                    self.jira_release_name != str(issue.release_name):
+                    self.jira_issue_status != issue.issue_status:
                 self.update_issue(self.issue_key,
                                   self.jira_issue_summary,
                                   self.jira_issue_status,
