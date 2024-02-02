@@ -78,7 +78,9 @@ def release_report_template(country):
         checklist_link = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId=40370935'
     elif country == 'ge':
         checklist_link = 'https://confluence.4slovo.ru/pages/viewpage.action?pageId=47383257'
-    template = (f'<table class="wrapped confluenceTable stickyTableHeaders tablesorter tablesorter-default" resolved="" style="padding: 0px;" role="grid">'
+    template = (f'<p class="auto-cursor-target">'
+                f'<a href="{checklist_link}">Чеклист тестирования релиза {country}</a>''</p>'
+                f'<table class="wrapped confluenceTable stickyTableHeaders tablesorter tablesorter-default" resolved="" style="padding: 0px;" role="grid">'
                 f'<thead class="tableFloatingHeaderOriginal">'
                 f'<tr role="row" class="tablesorter-headerRow">'
                 f'<th class="confluenceTh tablesorter-header sortableHeader tablesorter-headerUnSorted" data-column="0" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" aria-sort="none" aria-label=": No sort applied, activate to apply an ascending sort" style="user-select: none;">'
