@@ -49,12 +49,16 @@ class AtlassianMonitor(AtlassianConfig):
                 f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {issue.issue_key} {self.jira_release_name == str(issue.release_name)}')
             confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
 
-            if self.jira_release_name != issue.release_name:
+            if self.jira_release_name != str(issue.release_name):
                 issue.release_report = False
                 logger.info(
                     f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {issue.issue_key} Сюда проваливается')
                 issue.release_name = self.jira_release_name
+                logger.info(
+                    f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {issue.issue_key} {issue.release_name} BEFORE SAVA {self.jira_release_name}')
                 issue.save()
+                logger.info(
+                    f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {issue.issue_key} AFTER SAVA {issue.release_name}')
             if self.jira_issue_summary != issue.issue_summary or \
                     self.jira_issue_status != issue.issue_status or \
                     self.jira_release_name != str(issue.release_name):
