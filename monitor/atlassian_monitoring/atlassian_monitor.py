@@ -46,7 +46,7 @@ class AtlassianMonitor(AtlassianConfig):
             issue = self.issue()
             logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Проверка задачи {issue.issue_key} на обновление статуса/наименования/релиза')
             confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {self.jira_release_name != str(issue.release_name)}')
+            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {self.jira_release_name == str(issue.release_name)}')
             if self.jira_release_name != issue.release_name:
                 issue.release_report = False
                 issue.release_name = self.jira_release_name
