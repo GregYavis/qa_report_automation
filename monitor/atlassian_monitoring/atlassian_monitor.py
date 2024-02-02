@@ -52,17 +52,10 @@ class AtlassianMonitor(AtlassianConfig):
             if self.jira_release_name != str(issue.release_name):
                 issue.release_report = False
                 logger.info(
-                    f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {issue.issue_key} Сюда проваливается')
-                logger.info(
-                    f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {issue.issue_key} Сюда проваливается')
+                    f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {issue.issue_key} Сюда проваливается {self.jira_release_name}  {str(issue.release_name)} {type(issue.release_name)}')
                 issue.release_name = self.jira_release_name
-                logger.info(
-                    f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {issue.issue_key} Сюда проваливается')
-                logger.info(
-                    f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {issue.issue_key} {issue.release_name} BEFORE SAVA {self.jira_release_name}')
                 issue.save()
                 logger.info(
-                    f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {issue.issue_key} AFTER SAVA {issue.release_name}')
             if self.jira_issue_summary != issue.issue_summary or \
                     self.jira_issue_status != issue.issue_status or \
                     self.jira_release_name != str(issue.release_name):
