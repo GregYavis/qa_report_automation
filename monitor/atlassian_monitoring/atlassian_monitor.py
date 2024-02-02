@@ -51,7 +51,8 @@ class AtlassianMonitor(AtlassianConfig):
                 issue.release_name = self.jira_release_name
                 issue.save()
             if self.jira_issue_summary != issue.issue_summary or \
-                    self.jira_issue_status != issue.issue_status:
+                    self.jira_issue_status != issue.issue_status or \
+                    self.jira_release_name != issue.release_name:
                 self.update_issue(self.issue_key,
                                   self.jira_issue_summary,
                                   self.jira_issue_status,
@@ -62,6 +63,7 @@ class AtlassianMonitor(AtlassianConfig):
             logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создание записи для обновленной задачи еще не представленной в БД')
             try:
                 logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создана задача {self.issue_key}. Запись в БД')
+
                 self.save_issue(issue_key=self.issue_key,
                                 issue_summary=self.jira_issue_summary,
                                 release_name=self.jira_release_name,
