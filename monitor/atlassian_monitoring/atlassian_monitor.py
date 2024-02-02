@@ -71,6 +71,9 @@ class AtlassianMonitor(AtlassianConfig):
                 self.create_report()
             except IntegrityError:
                 logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача {self.issue_key} уже занесена в БД')
+                issue=self.issue()
+                logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача {self.issue_key} имеет {self.jira_release_name} no БД {issue.release_name}')
+
         return
 
 
