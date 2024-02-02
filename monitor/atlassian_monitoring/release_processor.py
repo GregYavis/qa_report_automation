@@ -97,7 +97,7 @@ class ReleaseProcessor(AtlassianConfig):
                     jira_release_name != issue.release_name or \
                     jira_issue_status != issue.issue_status or \
                     confluence_id != issue.confluence_id:
-                release = self._check_release_exist_and_save(release_name=jira_release_name)
+                release = self._get_release(release_name=jira_release_name)
                 self.update_issue(issue_key=issue.issue_key,
                                   issue_summary=jira_issue_summary,
                                   issue_status=jira_issue_status,

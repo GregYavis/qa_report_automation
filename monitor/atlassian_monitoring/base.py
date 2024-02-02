@@ -197,7 +197,7 @@ class AtlassianConfig:
             return False
 
     def update_issue(self, issue_key, issue_summary, issue_status, release_name, confluence_id):
-        release = self._check_release_exist_and_save(release_name=release_name)
+        release = self._get_release(release_name=release_name)
         issue = Issue.objects.get(issue_key=issue_key)
         issue.issue_summary = issue_summary
         issue.issue_status = issue_status
@@ -209,21 +209,18 @@ class AtlassianConfig:
         return self.confluence.page_exists(space="AT", title=self.confluence_title.format(issue_key))
 
 
-    def _check_release_exist_and_save(self, release_name):
+    def _get_release(self, release_name):
+        # Проверяем существование релиза, если нет - создаем. Возвращаем ORM обьект
         if not Release.objects.filter(release_key=release_name) and release_name is not None:
             Release.objects.create(release_key=release_name)
         elif release_name is None:
             release_name = str(release_name)
             if not Release.objects.filter(release_key=release_name):
                 Release.objects.create(release_key=release_name)
-        # Критерии готовности - уже есть отчет + все задачи имеют определенный статус + все задачи имеют отчет
-        # Получить чекбоксы всех тасок релиза
-        # Проверить сущестоввание страницы с отетом по релизу (ввести еще поле с id страницы cofluecne??)
-        # Проверить
         return Release.objects.get(release_key=release_name)
 
     def save_issue(self, issue_key, issue_summary, release_name, issue_status):
-        release = self._check_release_exist_and_save(release_name=release_name)
+        release = self._get_release(release_name=release_name)
         Issue.objects.create(issue_key=issue_key,
                              jira_url=''.join([self.JIRA_BASE_URL, "browse/", issue_key]),
                              issue_summary=issue_summary,
