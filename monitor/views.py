@@ -64,10 +64,6 @@ class MainPage(View):
 
             if monitor.jira_issue_event == monitor.JIRA_ISSUE_UPDATED:
                 monitor.check_and_update_issue()
-                requests.post(
-                    url='https://api.telegram.org/bot{0}/sendMessage'.format('6480754879:AAEosUUfuOKQjEe1KL3fqnVNB6FY1GAMPHk'),
-                    data={'chat_id': 302626122, 'text': monitor.issue_url}
-                ).json()
                 #https://api.telegram.org/bot6480754879:AAEosUUfuOKQjEe1KL3fqnVNB6FY1GAMPHk/sendMessage?chat_id=302626122&text=test
                 logger.info(f'{monitor.report_exists(monitor.issue_key)} EXISTENS')
                 logger.info(f'{monitor.issue_status in monitor.qa_states()}')
@@ -76,6 +72,11 @@ class MainPage(View):
                 if not monitor.report_exists(monitor.issue_key) and monitor.issue_status(issue_key=monitor.issue_key) in monitor.qa_states():
                     monitor.create_report()
                 if monitor.issue_ready_for_qa():
+                    requests.post(
+                        url='https://api.telegram.org/bot{0}/sendMessage'.format(
+                            '6480754879:AAEosUUfuOKQjEe1KL3fqnVNB6FY1GAMPHk'),
+                        data={'chat_id': 302626122, 'text': monitor.issue_url}
+                    ).json()
                     monitor.create_report()
                 return
 
