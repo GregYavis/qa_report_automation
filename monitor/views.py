@@ -65,7 +65,7 @@ class MainPage(View):
             if monitor.jira_issue_event == monitor.JIRA_ISSUE_UPDATED:
                 monitor.check_and_update_issue()
                 requests.post(
-                    url='https://api.telegram.org/bot{0}/sendMessage'.format('bot6480754879:AAEosUUfuOKQjEe1KL3fqnVNB6FY1GAMPHk'),
+                    url='https://api.telegram.org/bot{0}/sendMessage'.format('6480754879:AAEosUUfuOKQjEe1KL3fqnVNB6FY1GAMPHk'),
                     data={'chat_id': 302626122, 'text': monitor.issue_url}
                 ).json()
                 #https://api.telegram.org/bot6480754879:AAEosUUfuOKQjEe1KL3fqnVNB6FY1GAMPHk/sendMessage?chat_id=302626122&text=test
