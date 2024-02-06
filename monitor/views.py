@@ -10,7 +10,7 @@ from monitor.atlassian_monitoring.atlassian_monitor import AtlassianMonitor
 from monitor.atlassian_monitoring.release_processor import ReleaseProcessor
 
 from monitor.models import Issue, Release
-
+import requests
 logger = logging.getLogger('django')
 
 
@@ -64,6 +64,11 @@ class MainPage(View):
 
             if monitor.jira_issue_event == monitor.JIRA_ISSUE_UPDATED:
                 monitor.check_and_update_issue()
+                requests.post(
+                    url='https://api.telegram.org/bot{0}/sendMessage'.format('bot6480754879:AAEosUUfuOKQjEe1KL3fqnVNB6FY1GAMPHk'),
+                    data={'chat_id': 302626122, 'text': monitor.issue_url}
+                ).json()
+                #https://api.telegram.org/bot6480754879:AAEosUUfuOKQjEe1KL3fqnVNB6FY1GAMPHk/sendMessage?chat_id=302626122&text=test
                 logger.info(f'{monitor.report_exists(monitor.issue_key)} EXISTENS')
                 logger.info(f'{monitor.issue_status in monitor.qa_states()}')
                 logger.info(f'{monitor.issue_ready_for_qa()}')
