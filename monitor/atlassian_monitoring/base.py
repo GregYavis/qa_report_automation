@@ -166,7 +166,7 @@ class AtlassianConfig:
                 f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Обращение к скрытой или не существующей записи')
 
     def check_report_link_in_remote_links(self, issue):
-        issue.confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
+        # issue.confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
         # Проверяем ссылки на отчет о тестировании
         logger.info(
             f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} Проверка существования линка "
