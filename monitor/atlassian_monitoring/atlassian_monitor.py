@@ -35,7 +35,6 @@ class AtlassianMonitor(AtlassianConfig):
         issue_key = self.request['issue']['key']
         return issue_key
 
-
     def check_and_update_issue(self):
         """
         Достаем таску из ДБ, если ее там нету, то она ранее не обрабатывалась
@@ -44,7 +43,8 @@ class AtlassianMonitor(AtlassianConfig):
         """
         try:
             issue = self.issue()
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Проверка задачи {issue.issue_key} на обновление статуса/наименования/релиза')
+            logger.info(
+                f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Проверка задачи {issue.issue_key} на обновление статуса/наименования/релиза')
             logger.info(
                 f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} {issue.issue_key} {self.jira_release_name == str(issue.release_name)}')
             confluence_id = self.get_confluence_page_id(title=self.confluence_title.format(issue.issue_key))
@@ -64,9 +64,11 @@ class AtlassianMonitor(AtlassianConfig):
                                   confluence_id)
 
         except Exception:
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создание записи для обновленной задачи еще не представленной в БД')
+            logger.info(
+                f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создание записи для обновленной задачи еще не представленной в БД')
             try:
-                logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создана задача {self.issue_key}. Запись в БД')
+                logger.info(
+                    f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создана задача {self.issue_key}. Запись в БД')
 
                 self.save_issue(issue_key=self.issue_key,
                                 issue_summary=self.jira_issue_summary,
@@ -75,11 +77,11 @@ class AtlassianMonitor(AtlassianConfig):
                 self.create_report()
             except IntegrityError:
                 logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача {self.issue_key} уже занесена в БД')
-                issue=self.issue()
-                logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача {self.issue_key} имеет {self.jira_release_name} no БД {issue.release_name}')
+                issue = self.issue()
+                logger.info(
+                    f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача {self.issue_key} имеет {self.jira_release_name} no БД {issue.release_name}')
 
         return
-
 
     def set_issue_confluence_id(self):
         issue = self.issue()
@@ -113,35 +115,45 @@ class AtlassianMonitor(AtlassianConfig):
         """
         issue = self.issue()
 
-        logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} %-%-%-% Проверка на существование шаблона для отчета по задаче {self.issue_key} %-%-%-%')
+        logger.info(
+            f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} %-%-%-% Проверка на существование шаблона для отчета по задаче {self.issue_key} %-%-%-%')
         if not issue.confluence_id and not self.report_exists(self.issue_key):
             self._create_article_linked_with_task()
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Прикрепляем на отчет о тестировании к задаче {self.issue_key}.')
+            logger.info(
+                f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Прикрепляем на отчет о тестировании к задаче {self.issue_key}.')
             if not self.check_report_link_in_remote_links(issue=self.issue()):
                 self.create_link(issue=self.issue())
             self.set_issue_confluence_id()
         elif not issue.confluence_id and self.report_exists(self.issue_key):
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача уже имеет отчет о тестировании. Добавлен confluence_id отчета задачи {self.issue_key}')
+            logger.info(
+                f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача уже имеет отчет о тестировании. Добавлен confluence_id отчета задачи {self.issue_key}')
             self.set_issue_confluence_id()
         elif issue.confluence_id:
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача уже имеет отчет о тестировании и прикрепленную на него ссылку')
+            logger.info(
+                f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача уже имеет отчет о тестировании и прикрепленную на него ссылку')
         return
+
     def _check_and_create_report(self):
         issue = self.issue()
         if not issue.confluence_id and not self.report_exists(self.issue_key):
             self._create_article_linked_with_task()
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Прикрепляем на отчет о тестировании к задаче {self.issue_key}.')
+            logger.info(
+                f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Прикрепляем на отчет о тестировании к задаче {self.issue_key}.')
             if not self.check_report_link_in_remote_links(issue=self.issue()):
                 self.create_link(issue=self.issue())
             self.set_issue_confluence_id()
         elif not issue.confluence_id and self.report_exists(self.issue_key):
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача уже имеет отчет о тестировании. Добавлен confluence_id отчета задачи {self.issue_key}')
+            logger.info(
+                f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача уже имеет отчет о тестировании. Добавлен confluence_id отчета задачи {self.issue_key}')
             self.set_issue_confluence_id()
         elif issue.confluence_id:
-            logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача уже имеет отчет о тестировании и прикрепленную на него ссылку')
+            logger.info(
+                f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Задача уже имеет отчет о тестировании и прикрепленную на него ссылку')
         return
+
     def _create_article_linked_with_task(self):
-        logger.info(f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создана статья с шаблоном для отчета по тестированию задачи {self.issue_key}')
+        logger.info(
+            f'{datetime.now().strftime("%d/%m/%Y %H:%M:%S")} Создана статья с шаблоном для отчета по тестированию задачи {self.issue_key}')
         self.confluence.create_page(space='AT',
                                     title=self.confluence_title.format(self.issue_key),
                                     body=issue_report_template(self.issue_key),
@@ -150,4 +162,3 @@ class AtlassianMonitor(AtlassianConfig):
         # Создать линку на созданную статью к задаче в jira
 
         return
-
